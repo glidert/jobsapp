@@ -48,7 +48,6 @@
             font-size: 0.85rem; 
             font-weight: 600; 
             cursor: pointer; 
-            transition: all 0.2s ease;
         }
         button.active { 
             background: #1f6feb; 
@@ -75,7 +74,6 @@
             border: 1px solid var(--card-border);
             border-left: 5px solid #30363d; 
             cursor: pointer; 
-            transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease; 
         }
         
         .sentence-card.active { 
@@ -103,7 +101,7 @@
             bottom: 0; 
             left: 0; 
             right: 0; 
-            background: rgba(11, 15, 18, 0.95); 
+            background: rgba(11, 15, 18, 0.98); 
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             padding: 12px 10px 28px 10px; 
@@ -128,7 +126,7 @@
         .btn-play { background: #238636; border-color: #2ea043; color: #fff; }
         .btn-play.playing { background: #da3633; border-color: #f85149; }
         
-        .ctrl-sub { display: flex; justify-content: center; gap: 10px; width: 100%; max-width: 500px; }
+        .ctrl-sub { display: flex; justify-content: center; gap: 8px; width: 100%; max-width: 500px; flex-wrap: wrap; }
         .btn-loop.loop-on { background: var(--highlight); color: #000; border-color: var(--highlight); font-weight: 800; }
         select { background: #21262d; color: var(--text-main); font-size: 1rem; padding: 10px; border-radius: 8px; border: 1px solid #30363d; font-weight: 700; }
     </style>
@@ -149,7 +147,7 @@
         </div>
     </header>
 
-    <audio id="audioPlayer" src="Jobs.m4a"></audio>
+    <audio id="audioPlayer" src="Jobs.m4a" playsinline></audio>
 
     <div class="content" id="sentenceContainer"></div>
 
@@ -160,7 +158,7 @@
             <button class="btn-huge" onclick="nextSentence()">1文進む ≫</button>
         </div>
         <div class="ctrl-sub">
-            <button class="btn-huge btn-loop" id="loopBtn" onclick="toggleLoop()">🔁 1文ループ: OFF</button>
+            <button class="btn-loop" id="loopBtn" onclick="toggleLoop()" style="flex: 1; padding: 10px; border-radius: 8px; font-weight: 700;">🔁 1文ループ: OFF</button>
             <select id="speedSelect" onchange="changeSpeed()">
                 <option value="0.8">0.8x</option>
                 <option value="1.0" selected>1.0x</option>
@@ -172,127 +170,315 @@
     </div>
 
     <script>
+        // 完全固定の実測タイムスタンプ（CSV原本準拠・全301節）
         const SPEECH_DATA = [
-            { id: 1, chapter: "Intro", start: 0.0, end: 4.5, en: "Thank you.", ja: "ありがとうございます。", ipa: "θæŋk juː." },
-            { id: 2, chapter: "Intro", start: 4.5, end: 9.0, en: "I'm honored to be with you today", ja: "本日、皆さんと出席できることを光栄に思います", ipa: "aɪm ˈɑnərd tə bi wɪð ju təˈdeɪ" },
-            { id: 3, chapter: "Intro", start: 9.0, end: 14.0, en: "for your commencement from one of the finest universities in the world.", ja: "世界最高峰の大学の一つであるここスタンフォードの卒業式に。", ipa: "fər jʊr kəˈmɛnsmənt frəm wʌn əv ðə ˈfaɪnəst ˌjunəˈvɜrsətiz ɪn ðə wɜrld." },
-            { id: 4, chapter: "Intro", start: 14.0, end: 19.5, en: "Truth be told, I never graduated from college,", ja: "実を言えば、私自身は大学を卒業していません。", ipa: "truθ bi toʊld, aɪ ˈnɛvər ˈgræʤuˌeɪtəd frəm ˈkɑlɪʤ," },
-            { id: 5, chapter: "Intro", start: 19.5, end: 26.0, en: "and this is the closest I've ever gotten to a college graduation.", ja: "アンドこれが、私がこれまでで最も大学の卒業式に近づいた瞬間です。", ipa: "ænd ðɪs ɪz ðə ˈkloʊsəst aɪv ˈɛvər ˈgɑtən tu ə ˈkɑlɪʤ ˌgræʤuˈeɪʃən." },
-            { id: 6, chapter: "Intro", start: 26.0, end: 30.0, en: "Today I want to tell you three stories from my life.", ja: "今日、私は自分の人生から3つの物語をお話ししたいと思います。", ipa: "təˈdeɪ aɪ wɑnt tə tɛl ju θri ˈstɔriz frəm maɪ laɪf." },
-            { id: 7, chapter: "Intro", start: 30.0, end: 35.0, en: "That's it. No big deal. Just three stories.", ja: "それだけです。大したことではありません。ただの3つの物語です。", ipa: "ðæts ɪt. noʊ bɪg dil. ʤʌst θri ˈstɔriz." },
-            { id: 8, chapter: "Story1", start: 35.0, end: 39.5, en: "The first story is about connecting the dots.", ja: "最初の物語は、「点と点をつなぐ」ことについてです。", ipa: "ðə fɜrst ˈstɔri ɪz əˈbaʊt kəˈnɛktɪŋ ðə dɑts." },
-            { id: 9, chapter: "Story1", start: 39.5, end: 43.5, en: "I dropped out of Reed College after the first six months,", ja: "私はリード大学を入学後最初の6ヶ月で中退しましたが、", ipa: "aɪ drɑpt aʊt əv rid ˈkɑlɪʤ ˈæftər ðə fɜrst sɪks mʌnθs," },
-            { id: 10, chapter: "Story1", start: 43.5, end: 46.0, en: "but then stayed around as a drop-in", ja: "本当に辞めるまでの18ヶ月ほどは", ipa: "bʌt ðɛn steɪd əˈraʊnd æz ə drɑp-ɪn" },
-            { id: 11, chapter: "Story1", start: 46.0, end: 49.0, en: "for another 18 months or so before I really quit.", ja: "モグリの学生として大学の周りをうろついていました。", ipa: "fər əˈnʌðər 18 mʌnθs ɔr soʊ bɪˈfɔr aɪ ˈrɪli kwɪt." },
-            { id: 12, chapter: "Story1", start: 49.0, end: 51.5, en: "So why did I drop out?", ja: "なぜ中退したのか？", ipa: "soʊ waɪ dɪd aɪ drɑp aʊt?" },
-            { id: 13, chapter: "Story1", start: 51.5, end: 55.0, en: "It started before I was born.", ja: "それは私が生まれる前に始まりました。", ipa: "ɪt ˈstɑrtəd bɪˈfɔr aɪ wʌz bɔrn." },
-            { id: 14, chapter: "Story1", start: 55.0, end: 59.5, en: "My biological mother was a young, unwed graduate student,", ja: "私の生みの親は若く未婚の大学院生で、", ipa: "maɪ ˌbaɪəˈlɑʤɪkəl ˈmʌðər wʌz ə jʌŋ, ənˈwɛd ˈgræʤuət ˈstudənt," },
-            { id: 15, chapter: "Story1", start: 59.5, end: 63.5, en: "and she decided to put me up for adoption.", ja: "私を養子に出すことを決めました。", ipa: "ænd ʃi dɪˈsaɪdəd tə pʊt mi ʌp fər əˈdɑpʃən." },
-            { id: 16, chapter: "Story1", start: 63.5, end: 68.0, en: "She felt very strongly that I should be adopted by college graduates,", ja: "彼女は私を大学卒の親に養子縁組させるべきだと強く望んでいたため、", ipa: "ʃi fɛlt ˈvɛri ˈstrɔŋli ðæt aɪ ʃʊd bi əˈdɑptəd baɪ ˈkɑlɪʤ ˈgræʤuəts," },
-            { id: 17, chapter: "Story1", start: 68.0, end: 72.0, en: "so everything was all set for me to be adopted at birth", ja: "私があらかじめ生まれたら", ipa: "soʊ ˈɛvriˌθɪŋ wʌz ɔl sɛt fər mi tə bi əˈdɑptəd æt bɜrθ" },
-            { id: 18, chapter: "Story1", start: 72.0, end: 75.0, en: "by a lawyer and his wife.", ja: "弁護士夫婦に引き取られるよう全て手配されていました。", ipa: "baɪ ə ˈlɔjər ænd hɪz waɪf." },
-            { id: 19, chapter: "Story1", start: 75.0, end: 78.0, en: "Except that when I popped out,", ja: "ただし、私が生まれた瞬間に、", ipa: "ɪkˈsɛpt ðæt wɛn aɪ pɑpt aʊt," },
-            { id: 20, chapter: "Story1", start: 78.0, end: 82.5, en: "they decided at the last minute that they really wanted a girl.", ja: "彼らが「やっぱり女の子が欲しい」と土壇場で心変わりしたことを除いては。", ipa: "ðeɪ dɪˈsaɪdəd æt ðə læst ˈmɪnət ðæt ðeɪ ˈrɪli ˈwɑntəd ə gɜrl." },
-            { id: 21, chapter: "Story1", start: 82.5, end: 86.5, en: "So my parents, who were on a waiting list,", ja: "そのため、待機リストにいた現在の両親の元に", ipa: "soʊ maɪ ˈpɛrənts, hu wɜr ɑn ə ˈweɪtɪŋ lɪst," },
-            { id: 22, chapter: "Story1", start: 86.5, end: 90.0, en: "got a call in the middle of the night asking:", ja: "夜中に電話がかかってきました。", ipa: "gɑt ə kɔl ɪn ðə ˈmɪdəl əv ðə naɪt ˈæskɪŋ:" },
-            { id: 23, chapter: "Story1", start: 90.0, end: 94.0, en: ' "We\'ve got an unexpected baby boy; do you want him?" ', ja: "「思いがけず男の子が生まれたのですが、引き取りますか？」と。", ipa: "wiv gɑt ən ˌʌnɪkˈspɛktəd ˈbeɪbi bɔɪ; dʊ ju wɑnt hɪm?" },
-            { id: 24, chapter: "Story1", start: 94.0, end: 97.5, en: 'They said: "Of course."', ja: "両親は「もちろんです」と答えました。", ipa: "ðeɪ sɛd: ʌv kɔrs." },
-            { id: 25, chapter: "Story1", start: 97.5, end: 101.0, en: "My biological mother found out later", ja: "生みの親は後になって知りました、", ipa: "maɪ ˌbaɪəˈlɑʤɪkəl ˈmʌðər faʊnd aʊt ˈleɪtər" },
-            { id: 26, chapter: "Story1", start: 101.0, end: 105.0, en: "that my mother had never graduated from college", ja: "引き取った母親が大学を出ておらず、", ipa: "ðæt maɪ ˈmʌðər hæd ˈnɛvər ˈgræʤuˌeɪtəd frəm ˈkɑlɪʤ" },
-            { id: 27, chapter: "Story1", start: 105.0, end: 108.5, en: "and that my father had never graduated from high school.", ja: "父親も高校を出ていないことを。", ipa: "ænd ðæt maɪ ˈfɑðər hæd ˈnɛvər ˈgræʤuˌeɪtəd frəm haɪ skul." },
-            { id: 28, chapter: "Story1", start: 108.5, end: 112.0, en: "She refused to sign the final adoption papers.", ja: "彼女は最終的な養子縁組書類への署名を拒否しました。", ipa: "ʃi rɪˈfjuzd tə saɪn ðə ˈfaɪnəl əˈdɑpʃən ˈpeɪpərz." },
-            { id: 29, chapter: "Story1", start: 112.0, end: 116.5, en: "She only relented a few months later", ja: "数ヶ月後、彼女はようやく折れました、", ipa: "ʃi ˈoʊnli rɪˈlɛntəd ə fju mʌnθs ˈleɪtər" },
-            { id: 30, chapter: "Story1", start: 116.5, end: 120.0, en: "when my parents promised that I would go to college.", ja: "両親が「私を必ず大学に通わせる」と約束したことで。", ipa: "wɛn maɪ ˈpɛrənts ˈprɑməst ðæt aɪ wʊd goʊ tə ˈkɑlɪʤ." },
-            { id: 31, chapter: "Story1", start: 120.0, end: 124.0, en: "This was the start in my life.", ja: "これが私の人生の始まりでした。", ipa: "ðɪs wʌz ðə stɑrt ɪn maɪ laɪf." },
-            { id: 32, chapter: "Story1", start: 124.0, end: 128.5, en: "And 17 years later I did go to college,", ja: "アンド17年後、私は本当に大学に入学しました。", ipa: "ænd 17 jɪrz ˈleɪtər aɪ dɪd goʊ tə ˈkɑlɪʤ," },
-            { id: 33, chapter: "Story1", start: 128.5, end: 132.5, en: "but I naively chose a college", ja: "しかし愚かにも選んでしまったのです、", ipa: "bʌt aɪ nɑˈivli ʧoʊz ə ˈkɑlɪʤ" },
-            { id: 34, chapter: "Story1", start: 132.5, end: 136.0, en: "that was almost as expensive as Stanford,", ja: "スタンフォードと同じくらい学費の高い大学を。", ipa: "ðæt wʌz ˈɔlˌmoʊst æz ɪkˈspɛnsɪv æz ˈstænfərd," },
-            { id: 35, chapter: "Story1", start: 136.0, end: 140.0, en: "and all of my working-class parents' savings", ja: "アンド労働者階級の両親の貯金全てが", ipa: "ænd ɔl əv maɪ ˈwɜrkɪŋ-klæs ˈpɛrənts ˈseɪvɪŋz" },
-            { id: 36, chapter: "Story1", start: 140.0, end: 144.0, en: "were being spent on my college tuition.", ja: "授業料に消えていくことになりました。", ipa: "wɜr ˈbiɪŋ spɛnt ɑn maɪ ˈkɑlɪʤ tuˈɪʃən." },
-            { id: 37, chapter: "Story1", start: 144.0, end: 148.0, en: "After six months, I couldn't see the value in it.", ja: "6ヶ月後、私はそこに価値を見出せなくなりました。", ipa: "ˈæftər sɪks mʌnθs, aɪ ˈkʊdənt si ðə ˈvælju ɪn ɪt." },
-            { id: 38, chapter: "Story1", start: 148.0, end: 152.0, en: "I had no idea what I wanted to do with my life", ja: "人生で何をしたいのかも分からず、", ipa: "aɪ hæd noʊ aɪˈdiə wʌt aɪ ˈwɑntəd tə du wɪð maɪ laɪf" },
-            { id: 39, chapter: "Story1", start: 152.0, end: 157.0, en: "and no idea how college was going to help me figure it out.", ja: "大学がそれをどう助けてくれるのかも分かりませんでした。", ipa: "ænd noʊ aɪˈdiə haʊ ˈkɑlɪʤ wʌz ˈgoʊɪŋ tə hɛlp mi ˈfɪgjər ɪt aʊt." },
-            { id: 40, chapter: "Story1", start: 157.0, end: 161.0, en: "And here I was spending all the money", ja: "しかも私は使っていたのです、", ipa: "ænd hɪr aɪ wʌz ˈspɛndɪŋ ɔl ðə ˈmʌni" },
-            { id: 41, chapter: "Story1", start: 161.0, end: 164.5, en: "my parents had saved their entire life.", ja: "両親が一生かけて貯めたお金を。", ipa: "maɪ ˈpɛrənts hæd seɪvd ðɛr ɪnˈtaɪər laɪf." },
-            { id: 42, chapter: "Story1", start: 164.5, end: 168.0, en: "So I decided to drop out", ja: "だから中退を決め、", ipa: "soʊ aɪ dɪˈsaɪdəd tə drɑp aʊt" },
-            { id: 43, chapter: "Story1", start: 168.0, end: 172.0, en: "and trust that it would all work out okay.", ja: "全てはうまくいくと信じることにしました。", ipa: "ænd trʌst ðæt ɪt wʊd ɔl wɜrk aʊt ˌoʊˈkeɪ." },
-            { id: 44, chapter: "Story1", start: 172.0, end: 176.0, en: "It was pretty scary at the time,", ja: "当時は生きた心地もしませんでしたが、", ipa: "ɪt wʌz ˈprɪti ˈskɛri æt ðə taɪm," },
-            { id: 45, chapter: "Story1", start: 176.0, end: 180.0, en: "but looking back it was one of the best decisions I ever made.", ja: "振り返れば人生最良の決断の一つでした。", ipa: "bʌt ˈlʊkɪŋ bæk ɪt wʌz wʌn əv ðə bɛst dɪˈsɪʒənz aɪ ˈɛvər meɪd." },
-            { id: 46, chapter: "Story1", start: 180.0, end: 183.0, en: "The minute I dropped out", ja: "中退した瞬間から、", ipa: "ðə ˈmɪnət aɪ drɑpt aʊt" },
-            { id: 47, chapter: "Story1", start: 183.0, end: 188.0, en: "I could stop taking the required classes that didn't interest me,", ja: "興味のない必修科目をやめることができ、", ipa: "aɪ kʊd stɑp ˈteɪkɪŋ ðə rɪˈkwaɪərd ˈklæsəz ðæt ˈdɪdənt ˈɪntrəst mi," },
-            { id: 48, chapter: "Story1", start: 188.0, end: 193.0, en: "and begin dropping in on the ones that looked far more interesting.", ja: "面白そうな授業に潜り込み始めました。", ipa: "ænd bɪˈgɪn ˈdrɑpɪŋ ɪn ɑn ðə wʌnz ðæt lʊkt fɑr mɔr ˈɪntrəstɪŋ." },
-            { id: 49, chapter: "Story1", start: 193.0, end: 196.0, en: "It wasn't all romantic.", ja: "ロマンチックなことばかりではありませんでした。", ipa: "ɪt ˈwɑzənt ɔl roʊˈmæntɪk." },
-            { id: 50, chapter: "Story1", start: 196.0, end: 201.0, en: "I didn't have a dorm room, so I slept on the floor in friends' rooms,", ja: "寮がなく友達の部屋の床で寝て、", ipa: "aɪ ˈdɪdənt hæv ə dɔrm rum, soʊ aɪ slɛpt ɑn ðə flɔr ɪn frɛndz rumz," },
-            { id: 51, chapter: "Story1", start: 201.0, end: 206.0, en: "I returned coke bottles for the 5¢ deposits to buy food with,", ja: "コーラの空き瓶を5セントのデポジットに換えて食べ物を買い、", ipa: "aɪ rɪˈtɜrnd koʊk ˈbɑtəlz fər ðə faɪv sɛnt dɪˈpɑzɪts tə baɪ fud wɪθ," },
-            { id: 52, chapter: "Story1", start: 206.0, end: 211.0, en: "and I would walk the 7 miles across town every Sunday night", ja: "毎週日曜の夜は街を7マイル歩いて渡り、", ipa: "ænd aɪ wʊd wɔk ðə ˈsɛvən maɪlz əˈkrɔs taʊn ˈɛvri ˈsʌndeɪ naɪt" },
-            { id: 53, chapter: "Story1", start: 211.0, end: 216.0, en: "to get one good meal a week at the Hare Krishna temple.", ja: "ハレ・クリシュナ寺院で週に一度のまともな食事にありつきました。", ipa: "tə gɛt wʌn gʊd mil ə wik æt ðə ˈhɑri ˈkrɪʃnə ˈtɛmpəl." },
-            { id: 54, chapter: "Story1", start: 216.0, end: 218.5, en: "I loved it.", ja: "でも私はそれを愛していました。", ipa: "aɪ lʌvd ɪt." },
-            { id: 55, chapter: "Story1", start: 218.5, end: 224.0, en: "And much of what I stumbled into by following my curiosity and intuition", ja: "好奇心と直感に従って偶然出くわしたものの多くが、", ipa: "ænd mʌʧ əv wʌt aɪ ˈstʌmbəld ˈɪntu baɪ ˈfɑloʊɪŋ maɪ ˌkjʊriˈɑsəti ænd ˌɪntuˈɪʃən" },
-            { id: 56, chapter: "Story1", start: 224.0, end: 228.0, en: "turned out to be priceless later on.", ja: "後になってかけがえのない価値を持つことになりました。", ipa: "tɜrnd aʊt tə bi ˈpraɪsləs ˈleɪtər ɑn." },
-            { id: 57, chapter: "Story1", start: 228.0, end: 231.0, en: "Let me give you one example.", ja: "一つ例を挙げましょう。", ipa: "lɛt mi gɪv ju wʌn ɪgˈzæmpəl." },
-            { id: 58, chapter: "Story1", start: 231.0, end: 237.0, en: "Reed College at that time offered perhaps the best calligraphy instruction in the country.", ja: "当時のリード大学は、おそらく全米で最高のカリグラフィの講義を提供していました。", ipa: "rid ˈkɑlɪʤ æt ðæt taɪm ˈɔfərd pərˈhæps ðə bɛst kəˈlɪgrəfi ɪnˈstrʌkʃən ɪn ðə ˈkʌntri." },
-            { id: 59, chapter: "Story1", start: 237.0, end: 241.0, en: "Throughout the campus every poster,", ja: "キャンパス中のすべてのポスター、", ipa: "θruˈaʊt ðə ˈkæmpəs ˈɛvri ˈpoʊstər," },
-            { id: 60, chapter: "Story1", start: 241.0, end: 246.0, en: "every label on every drawer, was beautifully hand calligraphed.", ja: "すべての引き出しのラベルが美しい手書きの文字で彩られていました。", ipa: "ˈɛvri ˈleɪbəl ɑn ˈɛvri drɔr, wʌz ˈbjutəfəli hænd kəˈlɪgræft." },
-            { id: 61, chapter: "Story1", start: 246.0, end: 251.0, en: "Because I had dropped out and didn't have to take the normal classes,", ja: "私は中退して通常の授業を受ける必要がなかったので、", ipa: "bɪˈkɔz aɪ hæd drɑpt aʊt ænd ˈdɪdənt hæv tə teɪk ðə ˈnɔrməl ˈklæsəz," },
-            { id: 62, chapter: "Story1", start: 251.0, end: 255.0, en: "I decided to take a calligraphy class to learn how to do this.", ja: "これを学ぶためにカリグラフィの授業を取りました。", ipa: "aɪ dɪˈsaɪdəd tə teɪk ə kəˈlɪgrəfi klæs tə lɜrn haʊ tə du ðɪs." },
-            { id: 63, chapter: "Story1", start: 255.0, end: 259.0, en: "I learned about serif and sans-serif typefaces,", ja: "セリフ体やサンセリフ体について学び、", ipa: "aɪ lɜrnd əˈbaʊt ˈsɛrɪf ænd sænz-ˈsɛrɪf ˈtaɪpˌfeɪsəz," },
-            { id: 64, chapter: "Story1", start: 259.0, end: 263.0, en: "about varying the amount of space between different letter combinations,", ja: "異なる文字の組み合わせによるスペース調整や、", ipa: "əˈbaʊt ˈvɛriɪŋ ðə əˈmaʊnt əv speɪs bɪˈtwin ˈdɪfərənt ˈlɛtər ˌkɑmbəˈneɪʃənz," },
-            { id: 65, chapter: "Story1", start: 263.0, end: 267.0, en: "about what makes great typography great.", ja: "何が素晴らしいタイポグラフィを作るのかを学びました。", ipa: "əˈbaʊt wʌt meɪks greɪt taɪˈpɑgrəfi greɪt." },
-            { id: 66, chapter: "Story1", start: 267.0, end: 272.0, en: "It was beautiful, historical, artistically subtle in a way that science can't capture,", ja: "それは科学では捉えきれないほど美しく、歴史的で、芸術的に繊細で、", ipa: "ɪt wʌz ˈbjutəfəl, hɪˈstɔrɪkəl, ɑrˈtɪstɪkəli ˈsʌtəl ɪn ə weɪ ðæt ˈsaɪəns kænt ˈkæpʧər," },
-            { id: 67, chapter: "Story1", start: 272.0, end: 275.0, en: "and I found it fascinating.", ja: "私はそれに魅了されました。", ipa: "ænd aɪ faʊnd ɪt ˈfæsəˌneɪtɪŋ." },
-            { id: 68, chapter: "Story1", start: 275.0, end: 280.0, en: "None of this had even a hope of any practical application in my life.", ja: "このうちの何一つとして私の人生で実用化される見込みはありませんでした。", ipa: "nʌn əv ðɪs hæd ˈivɪn ə hoʊp əv ˈɛni ˈpræktɪkəl ˌæpləˈkeɪʃən ɪn maɪ laɪf." },
-            { id: 69, chapter: "Story1", start: 280.0, end: 284.5, en: "But 10 years later, when we were designing the first Macintosh computer,", ja: "しかし10年後、最初のMacintoshを設計していた時、", ipa: "bʌt 10 jɪrz ˈleɪtər, wɛn wi wɜr dɪˈzaɪnɪŋ ðə fɜrst ˈmækɪnˌtɑʃ kəmˈpjutər," },
-            { id: 70, chapter: "Story1", start: 284.5, end: 288.0, en: "it all came back to me. And we designed it all into the Mac.", ja: "そのすべてが蘇ってきたのです。アンド私たちはそれをすべてMacに組み込みました。", ipa: "ɪt ɔl keɪm bæk tə mi. ænd wi dɪˈzaɪnd ɪt ɔl ˈɪntu ðə mæk." },
-            { id: 71, chapter: "Story1", start: 288.0, end: 292.0, en: "It was the first computer with beautiful typography.", ja: "それは美しいタイポグラフィを備えた史上初のコンピュータでした。", ipa: "ɪt wʌz ðə fɜrst kəmˈpjutər wɪθ ˈbjutəfəl taɪˈpɑgrəfi." },
-            { id: 72, chapter: "Story1", start: 292.0, end: 296.0, en: "If I had never dropped in on that single course in college,", ja: "もし私が大学であの一つの講義に潜り込んでいなければ、", ipa: "ɪf aɪ hæd ˈnɛvər drɑpt ɪn ɑn ðæt ˈsɪŋgəl kɔrs ɪn ˈkɑlɪʤ," },
-            { id: 73, chapter: "Story1", start: 296.0, end: 301.0, en: "the Mac would have never had multiple typefaces or proportionally spaced fonts.", ja: "Macが複数の書体やプロポーショナルフォントを持つことは決してなかったでしょう。", ipa: "ðə mæk wʊd hæv ˈnɛvər hæd ˈmʌltəpəl ˈtaɪpˌfeɪsəz ɔr prəˈpɔrʃənəli speɪst fɑnts." },
-            { id: 74, chapter: "Story1", start: 301.0, end: 304.0, en: "And since Windows just copied the Mac,", ja: "アンドWindowsはMacを模倣しただけなので、", ipa: "ænd sɪns ˈwɪndoʊz ʤʌst ˈkɑpid ðə mæk," },
-            { id: 75, chapter: "Story1", start: 304.0, end: 308.0, en: "it's likely that no personal computer would have them.", ja: "パソコン全体がそれらを持たなかった可能性すらあります。", ipa: "ɪts ˈlaɪkli ðæt noʊ ˈpɜrsɪnɪl kəmˈpjutər wʊd hæv ðɛm." },
-            { id: 76, chapter: "Story1", start: 308.0, end: 311.0, en: "If I had never dropped out,", ja: "もし私が中退していなければ、", ipa: "ɪf aɪ hæd ˈnɛvər drɑpt aʊt," },
-            { id: 77, chapter: "Story1", start: 311.0, end: 314.0, en: "I would have never dropped in on that calligraphy class,", ja: "あのカリグラフィの授業に潜り込むこともなく、", ipa: "aɪ wʊd hæv ˈnɛvər drɑpt ɪn ɑn ðæt kəˈlɪgrəfi klæs," },
-            { id: 78, chapter: "Story1", start: 314.0, end: 319.0, en: "and personal computers might not have the wonderful typography that they do.", ja: "パソコンにこれほど素晴らしいタイポグラフィが載ることもなかったでしょう。", ipa: "ænd ˈpɜrsɪnɪl kəmˈpjutərz maɪt nɑt hæv ðə ˈwʌndərfəl taɪˈpɑgrəfi ðæt ðeɪ du." },
-            { id: 79, chapter: "Story1", start: 319.0, end: 324.0, en: "Of course it was impossible to connect the dots looking forward when I was in college.", ja: "もちろん、大学当時に将来を見据えて点をつなぐことなど不可能でした。", ipa: "ʌv kɔrs ɪt wʌz ɪmˈpɑsəbəl tə kəˈnɛkt ðə dɑts ˈlʊkɪŋ ˈfɔrwərd wɛn aɪ wʌz ɪn ˈkɑlɪʤ." },
-            { id: 80, chapter: "Story1", start: 324.0, end: 328.0, en: "But it was very, very clear looking backwards ten years later.", ja: "しかし10年後に振り返った時、それは非常に明確だったのです。", ipa: "bʌt ɪt wʌz ˈvɛri, ˈvɛri klɪr ˈlʊkɪŋ ˈbækwərdz tɛn jɪrz ˈleɪtər." },
-            { id: 81, chapter: "Story1", start: 328.0, end: 331.0, en: "Again, you can't connect the dots looking forward;", ja: "繰り返しになりますが、先を見通して点をつなぐことはできません；", ipa: "əˈgɛn, ju kænt kəˈnɛkt ðə dɑts ˈlʊkɪŋ ˈfɔrwərd;" },
-            { id: 82, chapter: "Story1", start: 331.0, end: 334.0, en: "you can only connect them looking backwards.", ja: "過去を振り返ることでしか点をつなぐことはできないのです。", ipa: "ju kæn ˈoʊnli kəˈnɛkt ðɛm ˈlʊkɪŋ ˈbækwərdz." },
-            { id: 83, chapter: "Story1", start: 334.0, end: 338.0, en: "So you have to trust that the dots will somehow connect in your future.", ja: "だからこそ、将来どこかで点と点がつながると信じなければなりません。", ipa: "soʊ ju hæv tə trʌst ðæt ðə dɑts wɪl ˈsʌmˌhaʊ kəˈnɛkt ɪn jʊər ˈfjuʧər." },
-            { id: 84, chapter: "Story1", start: 338.0, end: 341.0, en: "You have to trust in something —", ja: "何かを信じる必要があります——", ipa: "ju hæv tə trʌst ɪn ˈsʌmθɪŋ —" },
-            { id: 85, chapter: "Story1", start: 341.0, end: 345.0, en: "your gut, destiny, life, karma, whatever.", ja: "直感、運命、人生、カルマ、何でもいいのです。", ipa: "jʊər gʌt, ˈdɛstəni, laɪf, ˈkɑrmə, ˌwʌˈtɛvər." },
-            { id: 86, chapter: "Story1", start: 345.0, end: 348.5, en: "Because believing that the dots will connect down the road", ja: "点がいずれつながると信じることで、", ipa: "bɪˈkɔz bɪˈlivɪŋ ðæt ðə dɑts wɪl kəˈnɛkt daʊn ðə roʊd" },
-            { id: 87, chapter: "Story1", start: 348.5, end: 352.0, en: "will give you the confidence to follow your heart", ja: "自分の心に従う自信が生まれます、", ipa: "wɪl gɪv ju ðə ˈkɑnfədəns tə ˈfɑloʊ jʊər hɑrt" },
-            { id: 88, chapter: "Story1", start: 352.0, end: 356.0, en: "even when it leads you off the well-worn path.", ja: "たとえそれが道なき道へと導くことになろうとも。", ipa: "ˈivɪn wɛn ɪt lidz ju ɔf ðə wɛl-wɔrn pæθ." },
-            { id: 89, chapter: "Story1", start: 356.0, end: 360.0, en: "And that will make all the difference.", ja: "それがすべての違いを生むのです。", ipa: "ænd ðæt wɪl meɪk ɔl ðə ˈdɪfərəns." },
-
-            { id: 90, chapter: "Story2", start: 360.0, end: 364.0, en: "My second story is about love and loss.", ja: "2つ目の物語は、愛と挫折についてです。", ipa: "maɪ ˈsɛkənd ˈstɔri ɪz əˈbaʊt lʌv ænd lɔs." },
-            { id: 91, chapter: "Story2", start: 364.0, end: 368.0, en: "I was lucky — I found what I loved to do early in life.", ja: "私は幸運でした。人生の早い段階で、自分が愛せることを見つけられたからです。", ipa: "aɪ wʌz ˈlʌki — aɪ faʊnd wʌt aɪ lʌvd tə du ˈɜrli ɪn laɪf." },
-            { id: 92, chapter: "Story2", start: 368.0, end: 372.5, en: "Woz and I started Apple in my parents' garage when I was 20.", ja: "20歳の時、ウォズと私は実家のガレージでAppleを創業しました。", ipa: "wɑz ænd aɪ ˈstɑrtəd ˈæpəl ɪn maɪ ˈpɛrənts gəˈrɑʒ wɛn aɪ wʌz 20." },
-            { id: 93, chapter: "Story2", start: 372.5, end: 377.0, en: "We worked hard, and in 10 years Apple had grown from just the two of us in a garage", ja: "がむしゃらに働き、10年でAppleはガレージのたった2人から", ipa: "wi wɜrkt hɑrd, ænd ɪn 10 jɪrz ˈæpəl hæd groʊn frəm ʤʌst ðə tu əv ʌs ɪn ə gəˈrɑʒ" },
-            { id: 94, chapter: "Story2", start: 377.0, end: 381.0, en: "into a $2 billion company with over 4,000 employees.", ja: "4000人以上を抱える20億ドル規模の企業に成長しました。", ipa: "ˈɪntu ə 2 ˈbɪljən ˈdɑlər ˈkʌmpəni wɪθ ˈoʊvər 4,000 ɪmˈplɔɪiz." },
-            { id: 95, chapter: "Story2", start: 381.0, end: 385.0, en: "We'd just released our finest creation — the Macintosh — a year earlier,", ja: "最高傑作のMacintoshを発売した翌年、", ipa: "wid ʤʌst rɪˈlist ɑr ˈfaɪnəst kriˈeɪʃən — ðə ˈmækɪnˌtɑʃ — ə jɪr ˈɜrliər," },
-            { id: 96, chapter: "Story2", start: 385.0, end: 388.5, en: "and I had just turned 30. And then I got fired.", ja: "私は30歳になったばかりでした。そして私は会社を解雇されたのです。", ipa: "ænd aɪ hæd ʤʌst tɜrnd 30. ænd ðɛn aɪ gɑt ˈfaɪərd." },
-            { id: 97, chapter: "Story2", start: 388.5, end: 392.0, en: "How can you get fired from a company you started?", ja: "自分が作った会社からどうやってクビになるのでしょうか？", ipa: "haʊ kæn ju gɛt ˈfaɪərd frəm ə ˈkʌmpəni ju ˈstɑrtəd?" },
-            { id: 98, chapter: "Story2", start: 392.0, end: 396.0, en: "Well, as Apple grew we hired someone who I thought was very talented", ja: "会社が大きくなるにつれ、優秀だと思う人物を雇いました、", ipa: "wɛl, æz ˈæpəl gru wi ˈhaɪərd ˈsʌmˌwʌn hu aɪ θɔt wʌz ˈvɛri ˈtæləntəd" },
-            { id: 99, chapter: "Story2", start: 396.0, end: 400.0, en: "to run the company with me, and for the first year or so things went well.", ja: "私と一緒に経営を行うために。最初の1年はうまくいっていました。", ipa: "tə rʌn ðə ˈkʌmpəni wɪθ mi, ænd fər ðə fɜrst jɪr ɔr soʊ θɪŋz wɛnt wɛl." },
-            { id: 100, chapter: "Story2", start: 400.0, end: 404.0, en: "But then our visions of the future began to diverge", ja: "しかし将来のビジョンが分岐し始め、", ipa: "bʌt ðɛn ɑr ˈvɪʒənz əv ðə ˈfjuʧər bɪˈgæn tə daɪˈvɜrʤ" },
-            { id: 101, chapter: "Story2", start: 404.0, end: 407.0, en: "and eventually we had a falling out.", ja: "最終的に袂を分かちました。", ipa: "ænd ɪˈvɛnʧuəli wi hæd ə ˈfɑlɪŋ aʊt." },
-            { id: 102, chapter: "Story2", start: 407.0, end: 410.5, en: "When we did, our Board of Directors sided with him.", ja: "その際、取締役会は彼の側につきました。", ipa: "wɛn wi dɪd, ɑr bɔrd əv dɪˈrɛktərz ˈsaɪdəd wɪθ hɪm." },
-            { id: 103, chapter: "Story2", start: 410.5, end: 415.0, en: "And so at 30 I was out. And very publicly out.", ja: "こうして30歳で、私は公の場で追放されました。", ipa: "ænd soʊ æt 30 aɪ wʌz aʊt. ænd ˈvɛri ˈpʌblɪkli aʊt." },
-            { id: 104, chapter: "Story2", start: 415.0, end: 420.0, en: "What had been the focus of my entire adult life was gone,", ja: "私の成人人生のすべての中心だったものが消え去り、", ipa: "wʌt hæd bɪn ðə ˈfoʊkəs əv maɪ ɪnˈtaɪər əˈdʌlt laɪf wʌz gɔn," },
-            { id: 105, chapter: "Story2", start: 420.0, end: 423.5, en: "and it was devastating.", ja: "壊滅的でした。", ipa: "ænd ɪt wʌz ˈdɛvəˌsteɪtɪŋ." },
-            { id: 106, chapter: "Story2", start: 423.5, end: 427.0, en: "I really didn't know what to do for a few months.", ja: "数ヶ月間どうしていいか分かりませんでした。", ipa: "aɪ ˈrɪli ˈdɪdənt noʊ wʌt tə du fər ə fju mʌnθs." },
-            { id: 107, chapter: "Story2", start: 427.0, end: 431.0, en: "I felt that I had let the previous generation of entrepreneurs down —", ja: "先輩世代の起業家たちを失望させたと感じていました——", ipa: "aɪ fɛlt ðæt aɪ hæd lɛt ðə ˈpriviəs ˌʤɛnəˈreɪʃən əv ˌɑntrəprəˈnɜrz daʊn —" },
-            { id: 108, chapter: "Story2", start: 431.0, end: 435.0, en: "that I had dropped the baton as it was being passed to me.", ja: "引き継がれたバトンを落としてしまったのだと。", ipa: "ðæt aɪ hæd drɑpt ðə bəˈtɑn æz ɪt wʌz ˈbiɪŋ pæst tə mi." },
-            { id: 109, chapter: "Story2", start: 435.0, end: 438.5, en: "I met with David Packard and Bob Noyce", ja: "私はデイヴィッド・パッカードやボブ・ノイスに会い、", ipa: "aɪ mɛt wɪθ ˈdeɪvɪd ˈpækərd ænd bɑb nɔɪs" },
-            { id: 110, chapter: "Story2", start: 438.5, end: 442.0, en: "and tried to apologize for screwing up so badly.", ja: "無様に台無しにしたことを謝罪しようとしました。", ipa: "ænd traɪd tu əˈpɑləˌʤaɪz fər ˈskruɪŋ ʌp soʊ ˈbædli." },
-            { id: 111, chapter: "Story2", start: 442.0, end: 445.0, en: "I was a very public failure,", ja: "私の失敗は有名で、", ipa: "aɪ wʌz ə ˈvɛri ˈpʌblɪk ˈfeɪljər," },
-            { id: 112, chapter: "Story2", start: 445.0, end: 449.0, en: "and I even thought about running away from the valley.", ja: "シリコンバレーから逃げ出そうとも考えました。", ipa: "ænd aɪ ˈivɪn θɔt əˈbaʊt ˈrʌnɪŋ əˈweɪ frəm ðə ˈvæli." },
-            { id: 113, chapter: "Story2", start: 449.0, end: 453.0, en: "But something slowly began to dawn on me —", ja: "しかし、あることが少しずつ頭に浮かび上がってきました——", ipa: "bʌt ˈsʌmθɪŋ ˈsloʊli bɪˈgæn tə dɔn ɑn mi —" },
-            { id: 114, chapter: "Story2", start: 453.0, end: 456.0, en: "I still loved what I did.", ja: "自分はまだ、自分のやっていたことが好きなのだと。", ipa: "aɪ stɪl lʌvd wʌt aɪ dɪd." },
-            { id: 115, chapter: "Story2", start: 456.0, end: 460.0, en: "The turn of events at Apple had not changed that one bit.", ja: "Appleでの失脚という事態も、その気持ちを1ミリも変えませんでした。", ipa: "ðə tɜrn əv ɪˈvɛnts æt ˈæpəl hæd nɑt ʧeɪnʤd ðæt wʌn bɪt." },
-            { id: 116, chapter: "Story2", start: 460.0, end: 463.5, en: "I had been rejected, but I was still in love.", ja: "拒絶されても、私はまだ愛していたのです。", ipa: "aɪ hæd bɪn rɪˈʤɛktəd, bʌt aɪ wʌz stɪl ɪn lʌv." },
-            { id: 117, chapter: "Story2", start: 463.5, end: 467.0, en: "And so I decided to start over.", ja: "だから、もう一度やり直す決意をしました。", ipa: "ænd soʊ aɪ dɪˈsaɪdəd tə stɑrt ˈoʊvər." },
-            { id: 118, chapter: "Story3", start: 837.0, end: 854.0, en: "Stay Hungry. Stay Foolish. Thank you all very much.", ja: "ハングリーであれ。愚かであれ。ご清聴ありがとうございました。", ipa: "steɪ ˈhʌŋgri. steɪ ˈfulɪʃ. θæŋk ju ɔl ˈvɛri mʌʧ." }
+            { id: 1, chapter: "Intro", start: 0.0, end: 0.0, en: "Thank you.", ja: "ありがとうございます。", ipa: "θæŋk ju." },
+            { id: 2, chapter: "Intro", start: 6.0, end: 6.0, en: "I'm honored to be with you today for your commencement", ja: "本日、皆さんと共に出席できることを光栄に思います、卒業式に", ipa: "əm ˈɑnərd tɪ bi wɪθ ju təˈdeɪ fər jʊr kəˈmɛnsmənt" },
+            { id: 3, chapter: "Intro", start: 9.0, end: 9.0, en: "from one of the finest universities in the world.", ja: "世界最高峰の大学の一つであるここスタンフォードの。", ipa: "frəm wən əv ðə ˈfaɪnəst ˌjunəˈvərsətiz ɪn ðə wərld." },
+            { id: 4, chapter: "Intro", start: 15.0, end: 15.0, en: "Truth be told, I never graduated from college.", ja: "実を言えば、私自身は大学を卒業していません。", ipa: "truθ bi toʊld, aɪ ˈnɛvər ˈgræʤəˌweɪtɪd frəm ˈkɑlɪʤ." },
+            { id: 5, chapter: "Intro", start: 20.0, end: 20.0, en: "And this is the closest I've ever", ja: "アンドこれが、私がこれまでで最も", ipa: "ənd ðɪs ɪz ðə ˈkloʊsəst aɪv ˈɛvər" },
+            { id: 6, chapter: "Intro", start: 23.0, end: 23.0, en: "gotten to a college graduation.", ja: "大学の卒業式に近づいた瞬間です。", ipa: "ˈgɔtən tɪ ə ˈkɑlɪʤ ˌgræʤəˈweɪʃən." },
+            { id: 7, chapter: "Intro", start: 27.0, end: 27.0, en: "Today, I want to tell you three stories from my life.", ja: "今日、私は自分の人生から3つの物語をお話ししたいと思います。", ipa: "təˈdeɪ, aɪ wɔnt tɪ tɛl ju θri ˈstɔriz frəm maɪ laɪf." },
+            { id: 8, chapter: "Intro", start: 30.0, end: 30.0, en: "That's it.", ja: "それだけです。", ipa: "ðæts ɪt." },
+            { id: 9, chapter: "Intro", start: 31.0, end: 31.0, en: "No big deal.", ja: "大したことではありません。", ipa: "noʊ bɪg dil." },
+            { id: 10, chapter: "Intro", start: 32.0, end: 32.0, en: "Just three stories.", ja: "ただの3つの物語です。", ipa: "ʤɪst θri ˈstɔriz." },
+            { id: 11, chapter: "Intro", start: 33.0, end: 33.0, en: "Three stories.", ja: "3つの物語です。", ipa: "θri ˈstɔriz." },
+            { id: 12, chapter: "Story1", start: 34.0, end: 34.0, en: "The first story is about connecting the dots.", ja: "最初の物語は、「点と点をつなぐ」ことについてです。", ipa: "ðə fərst ˈstɔri ɪz əˈbaʊt kəˈnɛktɪŋ ðə dɑts." },
+            { id: 13, chapter: "Story1", start: 39.0, end: 39.0, en: "I dropped out of Reed College after the first six months,", ja: "私はリード大学を入学後最初の6ヶ月で中退しましたが、", ipa: "aɪ drɑpt aʊt əv rid ˈkɑlɪʤ ˈæftər ðə fərst sɪks mənθs," },
+            { id: 14, chapter: "Story1", start: 43.0, end: 43.0, en: "but then stayed around as a drop-in for another 18 months", ja: "本当に辞めるまでの18ヶ月ほどはモグリの学生としてうろついていました、", ipa: "bət ðɛn steɪd əraʊnd æz ə ˈdrɑpˌɪn fər əˈnəðər eɪˈtin mʌnθs" },
+            { id: 15, chapter: "Story1", start: 45.0, end: 45.0, en: "or so before I really quit.", ja: "本当に大学をやめるまでに。", ipa: "ər soʊ ˌbiˈfɔr aɪ ˈrɪli kwɪt." },
+            { id: 16, chapter: "Story1", start: 48.0, end: 48.0, en: "So why'd I drop out?", ja: "なぜ中退したのか？", ipa: "soʊ waɪd aɪ drɔp aʊt?" },
+            { id: 17, chapter: "Story1", start: 51.0, end: 51.0, en: "It started before I was born.", ja: "それは私が生まれる前に始まりました。", ipa: "ɪt ˈstɑrtɪd ˌbiˈfɔr aɪ wɑz bɔrn." },
+            { id: 18, chapter: "Story1", start: 54.0, end: 54.0, en: "My biological mother was a young, unwed graduate student,", ja: "私の生みの親は若く未婚の大学院生で、", ipa: "maɪ ˌbaɪəˈlɑʤɪkəl ˈməðər wɑz ə jəŋ, ənˈwɛd ˈgræʤəˌweɪt ˈstudənt," },
+            { id: 19, chapter: "Story1", start: 58.0, end: 58.0, en: "and she decided to put me up for adoption.", ja: "私を養子に出すことを決めました。", ipa: "ənd ʃi ˌdɪˈsaɪdɪd tɪ pʊt mi əp fər əˈdɑpʃən." },
+            { id: 20, chapter: "Story1", start: 61.0, end: 61.0, en: "She felt very strongly that I should be adopted", ja: "彼女は私を大学卒の親に養子縁組させるべきだと強く望んでいたため、", ipa: "ʃi fɛlt ˈvɛri ˈstrɔŋli ðət aɪ ʃʊd bi əˈdɑptəd" },
+            { id: 21, chapter: "Story1", start: 63.0, end: 63.0, en: "by college graduates, so everything", ja: "私があらかじめ生まれたら", ipa: "baɪ ˈkɑlɪʤ ˈgræʤəˌweɪts, soʊ ˈɛvriˌθɪŋ" },
+            { id: 22, chapter: "Story1", start: 65.0, end: 65.0, en: "was all set for me to be adopted at birth", ja: "弁護士夫婦に引き取られるよう全て手配されていました。", ipa: "wɑz ɔl sɛt fər mi tɪ bi əˈdɑptəd æt bərθ" },
+            { id: 23, chapter: "Story1", start: 68.0, end: 68.0, en: "by a lawyer and his wife.", ja: "弁護士夫婦に引き取られるよう全て手配されていました。", ipa: "baɪ ə ˈlɔjər ənd hɪz waɪf." },
+            { id: 24, chapter: "Story1", start: 70.0, end: 70.0, en: "Except that when I popped out, they", ja: "ただし、私が生まれた瞬間に、", ipa: "ɪkˈsɛpt ðət wɪn aɪ pɑpt aʊt, ðeɪ" },
+            { id: 25, chapter: "Story1", start: 73.0, end: 73.0, en: "decided at the last minute that they really wanted a girl.", ja: "彼らが「やっぱり女の子が欲しい」と土壇場で心変わりしたことを除いては。", ipa: "ˌdɪˈsaɪdɪd æt ðə læst ˈmɪnət ðət ðeɪ ˈrɪli ˈwɔntɪd ə gərl." },
+            { id: 26, chapter: "Story1", start: 76.0, end: 76.0, en: "So my parents, who were on a waiting list,", ja: "そのため、待機リストにいた両親の元に", ipa: "soʊ maɪ ˈpɛrənts, hu wər ɔn ə ˈweɪtɪŋ lɪst," },
+            { id: 27, chapter: "Story1", start: 79.0, end: 79.0, en: "got a call in the middle of the night asking,", ja: "夜中に電話がかかってきました、", ipa: "gɑt ə kɔl ɪn ðə ˈmɪdəl əv ðə naɪt ˈæskɪŋ," },
+            { id: 28, chapter: "Story1", start: 82.0, end: 82.0, en: "we've got an unexpected baby boy.", ja: "「思いがけず男の子が生まれたのですが、", ipa: "wiv gɑt ən ˌənɪkˈspɛktɪd ˈbeɪbi bɔɪ." },
+            { id: 29, chapter: "Story1", start: 84.0, end: 84.0, en: "Do you want him?", ja: "引き取りますか？」と。", ipa: "du ju wɔnt ɪm?" },
+            { id: 30, chapter: "Story1", start: 86.0, end: 86.0, en: "They said, of course.", ja: "両親は「もちろんです」と答えました。", ipa: "ðeɪ sɛd, əv kɔrs." },
+            { id: 31, chapter: "Story1", start: 89.0, end: 89.0, en: "My biological mother found out later", ja: "生みの親は後になって知りました、", ipa: "maɪ ˌbaɪəˈlɑʤɪkəl ˈməðər faʊnd aʊt ˈleɪtər" },
+            { id: 32, chapter: "Story1", start: 92.0, end: 92.0, en: "that my mother had never graduated from college", ja: "引き取った母親が大学を出ておらず、", ipa: "ðət maɪ ˈməðər hæd ˈnɛvər ˈgræʤəˌweɪtɪd frəm ˈkɑlɪʤ" },
+            { id: 33, chapter: "Story1", start: 94.0, end: 94.0, en: "and that my father had never graduated from high school.", ja: "父親も高校を出ていないことを。", ipa: "ənd ðət maɪ ˈfɑðər hæd ˈnɛvər ˈgræʤəˌweɪtɪd frəm haɪ skul." },
+            { id: 34, chapter: "Story1", start: 98.0, end: 98.0, en: "She refused to sign the final adoption papers.", ja: "彼女は最終的な養子縁組書類への署名を拒否しました。", ipa: "ʃi rɪfˈjuzd tɪ saɪn ðə ˈfaɪnəl əˈdɑpʃən ˈpeɪpərz." },
+            { id: 35, chapter: "Story1", start: 102.0, end: 102.0, en: "She only relented a few months later", ja: "数ヶ月後、彼女はようやく折れました、", ipa: "ʃi ˈoʊnli rɪˈlɛntɪd ə fju mənθs ˈleɪtər" },
+            { id: 36, chapter: "Story1", start: 104.0, end: 104.0, en: "when my parents promised that I would go to college.", ja: "両親が「私を必ず大学に通わせる」と約束したことで。", ipa: "wɪn maɪ ˈpɛrənts ˈprɑməst ðət aɪ wʊd goʊ tɪ ˈkɑlɪʤ." },
+            { id: 37, chapter: "Story1", start: 108.0, end: 108.0, en: "This was the start in my life.", ja: "これが私の人生の始まりでした。", ipa: "ðɪs wɑz ðə stɑrt ɪn maɪ laɪf." },
+            { id: 38, chapter: "Story1", start: 112.0, end: 112.0, en: "And 17 years later, I did go to college.", ja: "アンド17年後、私は本当に大学に入学しました。", ipa: "ənd 17 jɪrz ˈleɪtər, aɪ dɪd goʊ tɪ ˈkɑlɪʤ." },
+            { id: 39, chapter: "Story1", start: 116.0, end: 116.0, en: "But I naively chose a college that was almost", ja: "しかし愚かにも選んでしまったのです、", ipa: "bət aɪ nɑˈivli ʧoʊz ə ˈkɑlɪʤ ðət wɑz ˈɔlˌmoʊst" },
+            { id: 40, chapter: "Story1", start: 119.0, end: 119.0, en: "as expensive as Stanford.", ja: "スタンフォードと同じくらい学費の高い大学を。", ipa: "ɛz ɪkˈspɛnsɪv ɛz ˈstænfərd." },
+            { id: 41, chapter: "Story1", start: 121.0, end: 121.0, en: "And all of my working class parents' savings", ja: "アンド労働者階級の両親の貯金全てが", ipa: "ənd ɔl əv maɪ ˈwərkɪŋ klæs ˈpɛrənts' ˈseɪvɪŋz" },
+            { id: 42, chapter: "Story1", start: 123.0, end: 123.0, en: "were being spent on my college tuition.", ja: "授業料に消えていくことになりました。", ipa: "wər biɪŋ spɛnt ɔn maɪ ˈkɑlɪʤ tjuˈɪʃən." },
+            { id: 43, chapter: "Story1", start: 126.0, end: 126.0, en: "After six months, I couldn't see the value in it.", ja: "6ヶ月後、私はそこに価値を見出せなくなりました。", ipa: "ˈæftər sɪks mənθs, aɪ ˈkʊdənt si ðə ˈvælju ɪn ɪt." },
+            { id: 44, chapter: "Story1", start: 129.0, end: 129.0, en: "I had no idea what I wanted to do with my life", ja: "人生で何をしたいのかも分からず、", ipa: "aɪ hæd noʊ aɪˈdiə wət aɪ ˈwɔntɪd tɪ du wɪθ maɪ laɪf" },
+            { id: 45, chapter: "Story1", start: 132.0, end: 132.0, en: "and no idea how college was going", ja: "大学がそれをどう助けてくれるのかも分かりませんでした、", ipa: "ənd noʊ aɪˈdiə haʊ ˈkɑlɪʤ wɑz goʊɪŋ" },
+            { id: 46, chapter: "Story1", start: 134.0, end: 134.0, en: "to help me figure it out.", ja: "それを理解するのを。", ipa: "tɪ hɛlp mi ˈfɪgjər ɪt aʊt." },
+            { id: 47, chapter: "Story1", start: 135.0, end: 135.0, en: "And here I was, spending all the money my parents", ja: "しかも私は両親が一生かけて貯めたお金を使い果たそうとしていたのです、", ipa: "ənd hir aɪ wɑz, ˈspɛndɪŋ ɔl ðə ˈməni maɪ ˈpɛrənts" },
+            { id: 48, chapter: "Story1", start: 138.0, end: 138.0, en: "had saved their entire life.", ja: "両親が一生かけて貯めた。", ipa: "hæd seɪvd ðɛr ɪnˈtaɪər laɪf." },
+            { id: 49, chapter: "Story1", start: 141.0, end: 141.0, en: "So I decided to drop out and trust", ja: "だから中退を決め、", ipa: "soʊ aɪ ˌdɪˈsaɪdɪd tɪ drɔp aʊt ənd trəst" },
+            { id: 50, chapter: "Story1", start: 144.0, end: 144.0, en: "that it would all work out OK.", ja: "全てはうまくいくと信じることにしました。", ipa: "ðət ɪt wʊd ɔl wərk aʊt ˈoʊˈkeɪ." },
+            { id: 51, chapter: "Story1", start: 146.0, end: 146.0, en: "It was pretty scary at the time, but looking back,", ja: "当時は生きた心地もしませんでしたが、振り返れば、", ipa: "ɪt wɑz ˈprɪti ˈskɛri æt ðə taɪm, bət ˈlʊkɪŋ bæk," },
+            { id: 52, chapter: "Story1", start: 149.0, end: 149.0, en: "it was one of the best decisions I ever made.", ja: "人生最良の決断の一つでした。", ipa: "ɪt wɑz wən əv ðə bɛst dɪˈsɪʒənz aɪ ˈɛvər meɪd." },
+            { id: 53, chapter: "Story1", start: 152.0, end: 152.0, en: "The minute I dropped out, I could", ja: "中退した瞬間から、", ipa: "ðə ˈmɪnət aɪ drɑpt aʊt, aɪ kʊd" },
+            { id: 54, chapter: "Story1", start: 155.0, end: 155.0, en: "stop taking the required classes that didn't interest me", ja: "興味のない必修科目をやめることができ、", ipa: "stɑp ˈteɪkɪŋ ðə rikˈwaɪərd ˈklæsɪz ðət ˈdɪdənt ˈɪntəˌrɛst mi" },
+            { id: 55, chapter: "Story1", start: 158.0, end: 158.0, en: "and begin dropping in on the ones that", ja: "面白そうな授業に潜り込み始めました、", ipa: "ənd bɪˈgɪn ˈdrɑpɪŋ ɪn ɔn ðə wənz ðət" },
+            { id: 56, chapter: "Story1", start: 161.0, end: 161.0, en: "looked far more interesting.", ja: "はるかに面白そうな。", ipa: "lʊkt fɑr mɔr ˈɪntəˌrɛstɪŋ." },
+            { id: 57, chapter: "Story1", start: 163.0, end: 163.0, en: "It wasn't all romantic.", ja: "ロマンチックなことばかりではありませんでした。", ipa: "ɪt ˈwəzənt ɔl roʊˈmæntɪk." },
+            { id: 58, chapter: "Story1", start: 165.0, end: 165.0, en: "I didn't have a dorm room, so I slept", ja: "寮がなく友達の部屋の床で寝て、", ipa: "aɪ ˈdɪdənt hæv ə dɔrm rum, soʊ aɪ slɛpt" },
+            { id: 59, chapter: "Story1", start: 167.0, end: 167.0, en: "on the floor in friends' rooms.", ja: "友達の部屋の床で。", ipa: "ɔn ðə flɔr ɪn frɛndz' rumz." },
+            { id: 60, chapter: "Story1", start: 169.0, end: 169.0, en: "I returned Coke bottles for the $0.05 deposits", ja: "コーラの空き瓶を5セントのデポジットに換えて", ipa: "aɪ rɪˈtərnd koʊk ˈbɑtəlz fər ðə faɪv sɛnt dɪˈpɑzəts" },
+            { id: 61, chapter: "Story1", start: 172.0, end: 172.0, en: "to buy food with.", ja: "食べ物を買い。", ipa: "tɪ baɪ fud wɪθ." },
+            { id: 62, chapter: "Story1", start: 173.0, end: 173.0, en: "And I would walk the seven miles across town every Sunday", ja: "毎週日曜の夜は街を7マイル歩いて渡り、", ipa: "ənd aɪ wʊd wɔk ðə ˈsɛvən maɪəlz əˈkrɔs taʊn ˈɛvəri ˈsənˌdi" },
+            { id: 63, chapter: "Story1", start: 176.0, end: 176.0, en: "night to get one good meal a week at the Hare Krishna", ja: "ハレ・クリシュナ寺院で週に一度のまともな食事にありつきました、", ipa: "naɪt tɪ gɪt wən gʊd mil ə wik æt ðə hɛr ˈkrɪʃnə" },
+            { id: 64, chapter: "Story1", start: 179.0, end: 179.0, en: "temple.", ja: "寺院で。", ipa: "ˈtɛmpəl." },
+            { id: 65, chapter: "Story1", start: 181.0, end: 181.0, en: "I loved it.", ja: "でも私はそれを愛していました。", ipa: "aɪ ləvd ɪt." },
+            { id: 66, chapter: "Story1", start: 182.0, end: 182.0, en: "And much of what I stumbled into by following", ja: "好奇心と直感に従って偶然出くわしたものの多くが、", ipa: "ənd məʧ əv wət aɪ ˈstəmbəld ˈɪntu baɪ ˈfɑloʊɪŋ" },
+            { id: 67, chapter: "Story1", start: 185.0, end: 185.0, en: "my curiosity and intuition turned out", ja: "後になってかけがえのない価値を持つことになりました、", ipa: "maɪ ˌkjʊriˈɑsəti ənd ˌɪntuˈɪʃən tərnd aʊt" },
+            { id: 68, chapter: "Story1", start: 187.0, end: 187.0, en: "to be priceless later on.", ja: "後になって。", ipa: "tɪ bi ˈpraɪsləs ˈleɪtər ɔn." },
+            { id: 69, chapter: "Story1", start: 189.0, end: 189.0, en: "Let me give you one example.", ja: "一つ例を挙げましょう。", ipa: "lɛt mi gɪv ju wən ɪgˈzæmpəl." },
+            { id: 70, chapter: "Story1", start: 192.0, end: 192.0, en: "Reed College at that time offered perhaps", ja: "当時のリード大学は、おそらく全米で最高の", ipa: "rid ˈkɑlɪʤ æt ðət taɪm ˈɔfərd pərˈhæps" },
+            { id: 71, chapter: "Story1", start: 194.0, end: 194.0, en: "the best calligraphy instruction in the country.", ja: "カリグラフィの講義を提供していました。", ipa: "ðə bɛst kəˈlɪgrəfi ˌɪnˈstrəkʃən ɪn ðə ˈkəntri." },
+            { id: 72, chapter: "Story1", start: 197.0, end: 197.0, en: "Throughout the campus, every poster,", ja: "キャンパス中のすべてのポスター、", ipa: "θruaʊt ðə ˈkæmpəs, ˈɛvəri ˈpoʊstər," },
+            { id: 73, chapter: "Story1", start: 199.0, end: 199.0, en: "every label on every drawer was beautifully hand calligraphed.", ja: "引き出しのラベルが美しい手書きの文字で彩られていました。", ipa: "ˈɛvəri ˈleɪbəl ɔn ˈɛvəri drɔr wɑz ˈbjutəfli hænd ˈkæləgræft." },
+            { id: 74, chapter: "Story1", start: 204.0, end: 204.0, en: "Because I had dropped out and didn't", ja: "私は中退して通常の授業を受ける必要がなかったので、", ipa: "bɪˈkəz aɪ hæd drɑpt aʊt ənd ˈdɪdənt" },
+            { id: 75, chapter: "Story1", start: 206.0, end: 206.0, en: "have to take the normal classes, I", ja: "これを学ぶためにカリグラフィの授業を取りました、", ipa: "hæv tɪ teɪk ðə ˈnɔrməl ˈklæsɪz, aɪ" },
+            { id: 76, chapter: "Story1", start: 208.0, end: 208.0, en: "decided to take a calligraphy class to learn how to do this.", ja: "これのやり方を学ぶために。", ipa: "ˌdɪˈsaɪdɪd tɪ teɪk ə kəˈlɪgrəfi klæs tɪ lərn haʊ tɪ du ðɪs." },
+            { id: 77, chapter: "Story1", start: 212.0, end: 212.0, en: "I learned about serif and sans serif typefaces,", ja: "セリフ体やサンセリフ体について学び、", ipa: "aɪ ˈlərnd əˈbaʊt ˈsɛrɪf ənd sænz ˈsɛrɪf ˈtaɪpˌfeɪsəz," },
+            { id: 78, chapter: "Story1", start: 215.0, end: 215.0, en: "about varying the amount of space between different letter", ja: "異なる文字の組み合わせによるスペース調整や、", ipa: "əˈbaʊt ˈvɛriɪŋ ðə əˈmaʊnt əv speɪs bɪtˈwin ˈdɪfərənt ˈlɛtər" },
+            { id: 79, chapter: "Story1", start: 217.0, end: 217.0, en: "combinations, about what makes great typography great.", ja: "何が素晴らしいタイポグラフィを作るのかを学びました。", ipa: "ˌkɑmbəˈneɪʃənz, əˈbaʊt wət meɪks greɪt təˈpɑgrəfi greɪt." },
+            { id: 80, chapter: "Story1", start: 222.0, end: 222.0, en: "It was beautiful, historical, artistically subtle in a way", ja: "それは科学では捉えきれないほど美しく、歴史的で、芸術的に繊細で、", ipa: "ɪt wɑz ˈbjutəfəl, hɪˈstɔrɪkəl, ɑrˈtɪstɪkli ˈsətəl ɪn ə weɪ" },
+            { id: 81, chapter: "Story1", start: 226.0, end: 226.0, en: "that science can't capture.", ja: "科学では捉えきれないほど。", ipa: "ðət saɪəns kænt ˈkæpʧər." },
+            { id: 82, chapter: "Story1", start: 228.0, end: 228.0, en: "And I found it fascinating.", ja: "私はそれに魅了されました。", ipa: "ənd aɪ faʊnd ɪt ˈfæsəˌneɪtɪŋ." },
+            { id: 83, chapter: "Story1", start: 231.0, end: 231.0, en: "None of this had even a hope of any practical application", ja: "このうちの何一つとして私の人生で実用化される見込みはありませんでした、", ipa: "nən əv ðɪs hæd ˈivɪn ə hoʊp əv ˈɛni ˈpræktɪkəl ˌæpləˈkeɪʃən" },
+            { id: 84, chapter: "Story1", start: 234.0, end: 234.0, en: "in my life.", ja: "私の人生で。", ipa: "ɪn maɪ laɪf." },
+            { id: 85, chapter: "Story1", start: 236.0, end: 236.0, en: "But 10 years later, when we were designing the first Macintosh", ja: "しかし10年後、最初のMacintoshを設計していた時、", ipa: "bət 10 jɪrz ˈleɪtər, wɪn wi wər dɪˈzaɪnɪŋ ðə fərst ˈmækənˌtɔʃ" },
+            { id: 86, chapter: "Story1", start: 240.0, end: 240.0, en: "computer, it all came back to me.", ja: "そのすべてが蘇ってきたのです。", ipa: "kəmˈpjutər, ɪt ɔl keɪm bæk tɪ mi." },
+            { id: 87, chapter: "Story1", start: 242.0, end: 242.0, en: "And we designed it all into the Mac.", ja: "アンド私たちはそれをすべてMacに組み込みました。", ipa: "ənd wi dɪˈzaɪnd ɪt ɔl ˈɪntu ðə mæk." },
+            { id: 88, chapter: "Story1", start: 245.0, end: 245.0, en: "It was the first computer with beautiful typography.", ja: "それは美しいタイポグラフィを備えた史上初のコンピュータでした。", ipa: "ɪt wɑz ðə fərst kəmˈpjutər wɪθ ˈbjutəfəl təˈpɑgrəfi." },
+            { id: 89, chapter: "Story1", start: 248.0, end: 248.0, en: "If I had never dropped in on that single course in college,", ja: "もし私が大学であの一つの講義に潜り込んでいなければ、", ipa: "ɪf aɪ hæd ˈnɛvər drɑpt ɪn ɔn ðət ˈsɪŋgəl kɔrs ɪn ˈkɑlɪʤ," },
+            { id: 90, chapter: "Story1", start: 252.0, end: 252.0, en: "the Mac would have never had multiple typefaces", ja: "Macが複数の書体を持つことは決してなかったでしょう、", ipa: "ðə mæk wʊd hæv ˈnɛvər hæd ˈməltəpəl ˈtaɪpˌfeɪsəz" },
+            { id: 91, chapter: "Story1", start: 254.0, end: 254.0, en: "or proportionally spaced fonts.", ja: "プロポーショナルフォントを持つことも。", ipa: "ər prəˈpɔrʃənəli speɪst fɑnts." },
+            { id: 92, chapter: "Story1", start: 256.0, end: 256.0, en: "And since Windows just copied the Mac,", ja: "アンドWindowsはMacを模倣しただけなので、", ipa: "ənd sɪns ˈwɪndoʊz ʤɪst ˈkɑpid ðə mæk," },
+            { id: 93, chapter: "Story1", start: 258.0, end: 258.0, en: "it's likely that no personal computer would have them.", ja: "パソコン全体がそれらを持たなかった可能性すらあります。", ipa: "ɪts ˈlaɪkli ðət noʊ ˈpərsɪnəl kəmˈpjutər wʊd hæv ðɛm." },
+            { id: 94, chapter: "Story1", start: 268.0, end: 268.0, en: "If I had never dropped out, I would have never", ja: "もし私が中退していなければ、あのカリグラフィの授業に", ipa: "ɪf aɪ hæd ˈnɛvər drɑpt aʊt, aɪ wʊd hæv ˈnɛvər" },
+            { id: 95, chapter: "Story1", start: 271.0, end: 271.0, en: "dropped in on that calligraphy class.", ja: "潜り込むこともなく。", ipa: "drɑpt ɪn ɔn ðət kəˈlɪgrəfi klæs." },
+            { id: 96, chapter: "Story1", start: 273.0, end: 273.0, en: "And personal computers might not have the wonderful typography", ja: "パソコンにこれほど素晴らしいタイポグラフィが載ることもなかったでしょう、", ipa: "ənd ˈpərsɪnəl kəmˈpjutərz maɪt nɑt hæv ðə ˈwəndərfəl təˈpɑgrəfi" },
+            { id: 97, chapter: "Story1", start: 276.0, end: 276.0, en: "that they do.", ja: "載っているような。", ipa: "ðət ðeɪ du." },
+            { id: 98, chapter: "Story1", start: 277.0, end: 277.0, en: "Of course, it was impossible to connect the dots looking", ja: "もちろん、大学当時に将来を見据えて点をつなぐことなど不可能でした、", ipa: "əv kɔrs, ɪt wɑz ˌɪmˈpɑsəbəl tɪ kəˈnɛkt ðə dɑts ˈlʊkɪŋ" },
+            { id: 99, chapter: "Story1", start: 280.0, end: 280.0, en: "forward when I was in college.", ja: "大学当時に。", ipa: "ˈfɔrwərd wɪn aɪ wɑz ɪn ˈkɑlɪʤ." },
+            { id: 100, chapter: "Story1", start: 281.0, end: 281.0, en: "But it was very, very clear looking backwards", ja: "しかし10年後に振り返った時、それは非常に明確だったのです、", ipa: "bət ɪt wɑz ˈvɛri, ˈvɛri klɪr ˈlʊkɪŋ ˈbækwərdz" },
+            { id: 101, chapter: "Story1", start: 284.0, end: 284.0, en: "10 years later.", ja: "10年後に。", ipa: "10 jɪrz ˈleɪtər." },
+            { id: 102, chapter: "Story1", start: 286.0, end: 286.0, en: "Again, you can't connect the dots looking forward.", ja: "繰り返しになりますが、先を見通して点をつなぐことはできません。", ipa: "əˈgɛn, ju kænt kəˈnɛkt ðə dɑts ˈlʊkɪŋ ˈfɔrwərd." },
+            { id: 103, chapter: "Story1", start: 288.0, end: 288.0, en: "You can only connect them looking backwards.", ja: "過去を振り返ることでしか点をつなぐことはできないのです。", ipa: "ju kən ˈoʊnli kəˈnɛkt ðɛm ˈlʊkɪŋ ˈbækwərdz." },
+            { id: 104, chapter: "Story1", start: 291.0, end: 291.0, en: "So you have to trust that the dots will somehow", ja: "だからこそ、将来どこかで点と点がつながると", ipa: "soʊ ju hæv tɪ trəst ðət ðə dɑts wɪl ˈsəmˌhaʊ" },
+            { id: 105, chapter: "Story1", start: 294.0, end: 294.0, en: "connect in your future.", ja: "信じなければなりません。", ipa: "kəˈnɛkt ɪn jʊr fˈjuʧər." },
+            { id: 106, chapter: "Story1", start: 295.0, end: 295.0, en: "You have to trust in something, your gut, destiny, life, karma,", ja: "直感、運命、人生、カルマなど、何かを信じる必要があります、", ipa: "ju hæv tɪ trəst ɪn ˈsəmθɪŋ, jʊr gət, ˈdɛstəni, laɪf, ˈkɑrmə," },
+            { id: 107, chapter: "Story1", start: 299.0, end: 299.0, en: "whatever.", ja: "何でもいいのです。", ipa: "ˌwəˈtɛvər." },
+            { id: 108, chapter: "Story1", start: 300.0, end: 300.0, en: "Because believing that the dots will connect down the road", ja: "点がいずれつながると信じることで、", ipa: "bɪˈkəz bɪˈlivɪŋ ðət ðə dɑts wɪl kəˈnɛkt daʊn ðə roʊd" },
+            { id: 109, chapter: "Story1", start: 304.0, end: 304.0, en: "will give you the confidence to follow your heart,", ja: "自分の心に従う自信が生まれます、", ipa: "wɪl gɪv ju ðə ˈkɑnfədɛns tɪ ˈfɑloʊ jʊr hɑrt," },
+            { id: 110, chapter: "Story1", start: 307.0, end: 307.0, en: "even when it leads you off the well-worn path.", ja: "たとえそれが道なき道へと導くことになろうとも。", ipa: "ˈivɪn wɛn ɪt lidz ju ɔf ðə ˈwɛlˌwɔrn pæθ." },
+            { id: 111, chapter: "Story1", start: 309.0, end: 309.0, en: "And that will make all the difference.", ja: "それがすべての違いを生むのです。", ipa: "ənd ðət wɪl meɪk ɔl ðə ˈdɪfərəns." },
+            { id: 112, chapter: "Story2", start: 317.0, end: 317.0, en: "My second story is about love and loss.", ja: "2つ目の物語は、愛と挫折についてです。", ipa: "maɪ ˈsɛkənd ˈstɔri ɪz əˈbaʊt ləv ənd lɔs." },
+            { id: 113, chapter: "Story2", start: 322.0, end: 322.0, en: "I was lucky.", ja: "私は幸運でした。", ipa: "aɪ wɑz ˈləki." },
+            { id: 114, chapter: "Story2", start: 324.0, end: 324.0, en: "I found what I love to do early in life.", ja: "人生の早い段階で、自分が愛せることを見つけられたからです。", ipa: "aɪ faʊnd wət aɪ ləv tɪ du ˈərli ɪn laɪf." },
+            { id: 115, chapter: "Story2", start: 327.0, end: 327.0, en: "Waz and I started Apple in my parents' garage when I was 20.", ja: "20歳の時、ウォズと私は実家のガレージでAppleを創業しました。", ipa: "wɑz ənd aɪ ˈstɑrtɪd ˈæpəl ɪn maɪ ˈpɛrənts gəˈrɑʒ wɛn aɪ wɑz ˈtwɛnti." },
+            { id: 116, chapter: "Story2", start: 330.0, end: 330.0, en: "We worked hard.", ja: "がむしゃらに働き。", ipa: "wi wərkt hɑrd." },
+            { id: 117, chapter: "Story2", start: 332.0, end: 332.0, en: "And in 10 years, Apple had grown from just the two of us", ja: "10年でAppleはガレージのたった2人から", ipa: "ənd ɪn 10 jɪrz, ˈæpəl hæd groʊn frəm ʤɪst ðə tu əv ˈjuˈɛs" },
+            { id: 118, chapter: "Story2", start: 334.0, end: 334.0, en: "in a garage into a $2 billion company", ja: "4000人以上を抱える20億ドル規模の企業に成長しました、", ipa: "ɪn ə gərɑʒ ˈɪntu ə 2 ˈbɪljən ˈkəmpəˌni" },
+            { id: 119, chapter: "Story2", start: 336.0, end: 336.0, en: "with over 4,000 employees.", ja: "4000人以上の社員を抱える。", ipa: "wɪθ ˈoʊvər fɔr ˈθaʊzənd ɛmˈplɔɪiz." },
+            { id: 120, chapter: "Story2", start: 338.0, end: 338.0, en: "We just released our finest creation, the Macintosh,", ja: "最高傑作のMacintoshを発売した翌年、", ipa: "wi ʤɪst riˈlist ɑr ˈfaɪnəst kriˈeɪʃən, ðə ˈmækənˌtɔʃ," },
+            { id: 121, chapter: "Story2", start: 342.0, end: 342.0, en: "a year earlier.", ja: "発売した翌年。", ipa: "ə jɪr ˈərliər." },
+            { id: 122, chapter: "Story2", start: 342.0, end: 342.0, en: "And I'd just turned 20.", ja: "私は20歳になったばかりでした。（言い直し）", ipa: "ənd aɪd ʤɪst tərnd 20" },
+            { id: 123, chapter: "Story2", start: 343.0, end: 343.0, en: "And I'd just turned 30.", ja: "私は30歳になったばかりでした。", ipa: "ənd aɪd ʤɪst tərnd 30" },
+            { id: 124, chapter: "Story2", start: 345.0, end: 345.0, en: "And then I got fired.", ja: "アンド自然と私は会社を解雇されたのです。", ipa: "ənd ðɛn aɪ gɑt faɪərd." },
+            { id: 125, chapter: "Story2", start: 347.0, end: 347.0, en: "How can you get fired from a company you started?", ja: "自分が作った会社からどうやってクビになるのでしょうか？", ipa: "haʊ kən ju gɪt faɪərd frəm ə ˈkəmpəˌni ju ˈstɑrtɪd?" },
+            { id: 126, chapter: "Story2", start: 351.0, end: 351.0, en: "Well, as Apple grew, we hired someone", ja: "会社が大きくなるにつれ、私と一緒に経営を行うために優秀だと思う人物を雇い、", ipa: "wɛl, ɛz ˈæpəl gru, wi haɪərd ˈsəmˌwən" },
+            { id: 127, chapter: "Story2", start: 354.0, end: 354.0, en: "who I thought was very talented to run the company with me.", ja: "私と一緒に経営を行うために。", ipa: "hu aɪ θɔt wɑz ˈvɛri ˈtæləntɪd tɪ rən ðə ˈkəmpəˌni wɪθ mi." },
+            { id: 128, chapter: "Story2", start: 357.0, end: 357.0, en: "And for the first year or so, things went well.", ja: "最初の1年はうまくいっていました。", ipa: "ənd fər ðə fərst jɪr ər soʊ, θɪŋz wɛnt wɛl." },
+            { id: 129, chapter: "Story2", start: 360.0, end: 360.0, en: "But then our visions of the future began to diverge.", ja: "しかし将来のビジョンが分岐し始め。", ipa: "bət ðɛn ɑr ˈvɪʒənz əv ðə fˈjuʧər bɪˈgæn tɪ dɪˈvərʤ." },
+            { id: 130, chapter: "Story2", start: 362.0, end: 362.0, en: "And eventually, we had a falling out.", ja: "最終的に袂を分かちました。", ipa: "ənd ɪˈvɛnʧəwəli, wi hæd ə ˈfɑlɪŋ aʊt." },
+            { id: 131, chapter: "Story2", start: 364.0, end: 364.0, en: "When we did, our board of directors sided with him.", ja: "その際、取締役会は彼の側につきました。", ipa: "wɪn wi dɪd, ɑr bɔrd əv dɪˈrɛktərz ˈsaɪdɪd wɪθ ɪm." },
+            { id: 132, chapter: "Story2", start: 367.0, end: 367.0, en: "And so at 30, I was out and very publicly out.", ja: "こうして30歳で、私は追放され、公の場で追放されました。", ipa: "ənd soʊ æt 30 aɪ wɑz aʊt ənd ˈvɛri ˈpəblɪkli aʊt." },
+            { id: 133, chapter: "Story2", start: 372.0, end: 372.0, en: "What had been the focus of my entire adult life was gone.", ja: "私の成人人生のすべての中心だったものが消え去り。", ipa: "wət hæd bɪn ðə ˈfoʊkɪs əv maɪ ɪnˈtaɪər ˈædəlt laɪf wɑz gɔn." },
+            { id: 134, chapter: "Story2", start: 375.0, end: 375.0, en: "And it was devastating.", ja: "壊滅的でした。", ipa: "ənd ɪt wɑz ˈdɛvəˌsteɪtɪŋ." },
+            { id: 135, chapter: "Story2", start: 377.0, end: 377.0, en: "I really didn't know what to do for a few months.", ja: "数ヶ月間どうしていいか分かりませんでした。", ipa: "aɪ ˈrɪli ˈdɪdənt noʊ wət tɪ du fər ə fju mənθs." },
+            { id: 136, chapter: "Story2", start: 379.0, end: 379.0, en: "I felt that I had let the previous generation", ja: "先輩世代の起業家たちを失望させたと感じていました、", ipa: "aɪ fɛlt ðət aɪ hæd lɛt ðə ˈpriviəs ˌʤɛnərˈeɪʃən" },
+            { id: 137, chapter: "Story2", start: 382.0, end: 382.0, en: "of entrepreneurs down, that I had dropped the baton as it", ja: "引き継がれたバトンを落としてしまったのだと、", ipa: "əv ˌɑntrəprəˈnərz daʊn, ðət aɪ hæd drɑpt ðə ˈbæˌtɑn ɛz ɪt" },
+            { id: 138, chapter: "Story2", start: 385.0, end: 385.0, en: "was being passed to me.", ja: "引き継がれる時に。", ipa: "wɑz biɪŋ pæst tɪ mi." },
+            { id: 139, chapter: "Story2", start: 386.0, end: 386.0, en: "I met with David Packard and Bob Noyce", ja: "私はデイヴィッド・パッカードやボブ・ノイスに会い、", ipa: "aɪ mɛt wɪθ ˈdeɪvɪd ˈpækərd ənd bɑb nɔɪs" },
+            { id: 140, chapter: "Story2", start: 389.0, end: 389.0, en: "and tried to apologize for screwing up so badly.", ja: "無様に台無しにしたことを謝罪しようとしました。", ipa: "ənd traɪd tɪ əˈpɑləˌʤaɪz fər skruɪŋ əp soʊ ˈbædli." },
+            { id: 141, chapter: "Story2", start: 393.0, end: 393.0, en: "I was a very public failure.", ja: "私の失敗は有名で。", ipa: "aɪ wɑz ə ˈvɛri ˈpəblɪk ˈfeɪljər." },
+            { id: 142, chapter: "Story2", start: 394.0, end: 394.0, en: "And I even thought about running away from the Valley.", ja: "シリコンバレーから逃げ出そうとも考えました。", ipa: "ənd aɪ ˈivɪn θɔt əˈbaʊt ˈrənɪŋ əˈweɪ frəm ðə ˈvæli." },
+            { id: 143, chapter: "Story2", start: 397.0, end: 397.0, en: "But something slowly began to dawn on me.", ja: "しかし、あることが少しずつ頭に浮かび上がってきました。", ipa: "bət ˈsəmθɪŋ sˈloʊli bɪˈgæn tɪ dɔn ɔn mi." },
+            { id: 144, chapter: "Story2", start: 400.0, end: 400.0, en: "I still loved what I did.", ja: "自分はまだ、自分のやっていたことが好きなのだと。", ipa: "aɪ stɪl ləvd wət aɪ dɪd." },
+            { id: 145, chapter: "Story2", start: 403.0, end: 403.0, en: "The turn of events at Apple had not changed that one bit.", ja: "Appleでの失脚という事態も、その気持ちを1ミリも変えませんでした。", ipa: "ðə tərn əv ɪˈvɛnts æt ˈæpəl hæd nɑt ʧeɪnʤd ðət wən bɪt." },
+            { id: 146, chapter: "Story2", start: 407.0, end: 407.0, en: "I'd been rejected, but I was still in love.", ja: "拒絶されても、私はまだ愛していたのです。", ipa: "aɪd bɪn rɪˈʤɛktɪd, bət aɪ wɑz stɪl ɪn ləv." },
+            { id: 147, chapter: "Story2", start: 410.0, end: 410.0, en: "And so I decided to start over.", ja: "だから、もう一度やり直す決意をしました。", ipa: "ənd soʊ aɪ ˌdɪˈsaɪdɪd tɪ stɑrt ˈoʊvər." },
+            { id: 148, chapter: "Story2", start: 413.0, end: 413.0, en: "I didn't see it then, but it turned out", ja: "当時は気づきませんでしたが、結果として分かったのです、", ipa: "aɪ ˈdɪdənt si ɪt ðɛn, bət ɪt tərnd aʊt" },
+            { id: 149, chapter: "Story2", start: 415.0, end: 415.0, en: "that getting fired from Apple was the best thing that", ja: "Appleを解雇されたことは、私の人生で最高のできごとだったと、", ipa: "ðət ˈgɪtɪŋ faɪərd frəm ˈæpəl wɑz ðə bɛst θɪŋ ðət" },
+            { id: 150, chapter: "Story2", start: 417.0, end: 417.0, en: "could have ever happened to me.", ja: "起こり得た最高のできごとだったと。", ipa: "kʊd hæv ˈɛvər ˈhæpənd tɪ mi." },
+            { id: 151, chapter: "Story2", start: 419.0, end: 419.0, en: "The heaviness of being successful", ja: "成功者の重圧は、", ipa: "ðə ˈhɛvinəs əv biɪŋ səkˈsɛsfəl" },
+            { id: 152, chapter: "Story2", start: 421.0, end: 421.0, en: "was replaced by the lightness of being a beginner again,", ja: "再び確信を持てない初心者に戻る軽やかさへと取って代わられました、", ipa: "wɑz ˌriˈpleɪst baɪ ðə ˈlaɪtnəs əv biɪŋ ə bɪˈgɪnər əˈgɛn," },
+            { id: 153, chapter: "Story2", start: 425.0, end: 425.0, en: "less sure about everything.", ja: "すべてにおいて確信を持てない。", ipa: "lɛs ʃʊr əˈbaʊt ˈɛvriˌθɪŋ." },
+            { id: 154, chapter: "Story2", start: 427.0, end: 427.0, en: "It freed me to enter one of the most creative periods", ja: "その自由さが私を人生で最もクリエイティブな時期へと導きました、", ipa: "ɪt frid mi tɪ ˈɛnər wən əv ðə moʊst kriˈeɪtɪv ˈpɪriədz" },
+            { id: 155, chapter: "Story2", start: 429.0, end: 429.0, en: "of my life.", ja: "私の人生の。", ipa: "əv maɪ laɪf." },
+            { id: 156, chapter: "Story2", start: 430.0, end: 430.0, en: "During the next five years, I started a company named Next,", ja: "その後の5年でNeXTという会社、", ipa: "ˈdʊrɪŋ ðə nɛkst faɪv jɪrz, aɪ ˈstɑrtɪd ə ˈkəmpəˌni neɪmd nɛkst," },
+            { id: 157, chapter: "Story2", start: 433.0, end: 433.0, en: "another company named Pixar, and fell in love", ja: "Pixarという会社を立ち上げ、恋に落ちました、", ipa: "əˈnəðər ˈkəmpəˌni neɪmd ˈpɪksɑr, ənd fɛl ɪn ləv" },
+            { id: 158, chapter: "Story2", start: 435.0, end: 435.0, en: "with an amazing woman who would become my wife.", ja: "後に妻となる素晴らしい女性と。", ipa: "wɪθ ən əˈmeɪzɪŋ ˈwʊmən hu wʊd bɪˈkəm maɪ waɪf." },
+            { id: 159, chapter: "Story2", start: 438.0, end: 438.0, en: "Pixar went on to create the world's first computer", ja: "Pixarは世界初のフルCGアニメ映画を制作し、", ipa: "ˈpɪksɑr wɛnt ɔn tɪ kriˈeɪt ðə wərldz fərst kəmˈpjutər" },
+            { id: 160, chapter: "Story2", start: 440.0, end: 440.0, en: "animated feature film, Toy Story,", ja: "『トイ・ストーリー』を、", ipa: "ˈænəˌmeɪtɪd ˈfiʧər fɪlm, tɔɪ ˈstɔri," },
+            { id: 161, chapter: "Story2", start: 443.0, end: 443.0, en: "and is now the most successful animation studio in the world.", ja: "今や世界で最も成功したアニメスタジオです。", ipa: "ənd ɪz naʊ ðə moʊst səkˈsɛsfəl ˌænəˈmeɪʃən ˈstudiˌoʊ ɪn ðə wərld." },
+            { id: 162, chapter: "Story2", start: 448.0, end: 448.0, en: "In a remarkable turn of events, Apple bought Next.", ja: "驚くべき展開によりAppleがNeXTを買収し。", ipa: "ɪn ə rɪˈmɑrkəbəl tərn əv ɪˈvɛnts, ˈæpəl bɔt nɛkst." },
+            { id: 163, chapter: "Story2", start: 452.0, end: 452.0, en: "And I returned to Apple.", ja: "私はAppleに復帰しました。", ipa: "ənd aɪ rɪˈtərnd tɪ ˈæpəl." },
+            { id: 164, chapter: "Story2", start: 454.0, end: 454.0, en: "And the technology we developed at Next", ja: "NeXTで開発した技術は、", ipa: "ənd ðə tɛkˈnɑləʤi wi dɪˈvɛləpt æt nɛkst" },
+            { id: 165, chapter: "Story2", start: 455.0, end: 455.0, en: "is at the heart of Apple's current renaissance.", ja: "現在のApple再興の核となっています。", ipa: "ɪz æt ðə hɑrt əv ˈæpəlz ˈkɑrənt ˌrɛnəˈsɑns." },
+            { id: 166, chapter: "Story2", start: 458.0, end: 458.0, en: "And Lorene and I have a wonderful family together.", ja: "アンドローレンと私は素晴らしい家庭を築いています。", ipa: "ənd lɔˈrin ənd aɪ hæv ə ˈwəndərfəl ˈfæməli təˈgɛðər." },
+            { id: 167, chapter: "Story2", start: 462.0, end: 462.0, en: "I'm pretty sure none of this would", ja: "これらは何一つ起こらなかったと確信しています、", ipa: "əm ˈprɪti ʃʊr nən əv ðɪs wʊd" },
+            { id: 168, chapter: "Story2", start: 464.0, end: 464.0, en: "have happened if I hadn't been fired from Apple.", ja: "もし私がAppleを解雇されていなかったら。", ipa: "hæv ˈhæpənd ɪf aɪ ˈhædənt bɪn faɪərd frəm ˈæpəl." },
+            { id: 169, chapter: "Story2", start: 466.0, end: 466.0, en: "It was awful-tasting medicine, but I", ja: "非常にまずい薬でしたが、", ipa: "ɪt wɑz ˈɔfəl ˈteɪstɪŋ ˈmɛdəsən, bət aɪ" },
+            { id: 170, chapter: "Story2", start: 469.0, end: 469.0, en: "guess the patient needed it.", ja: "患者には必要だったのでしょう。", ipa: "gɛs ðə ˈpeɪʃənt ˈnidɪd ɪt." },
+            { id: 171, chapter: "Story2", start: 472.0, end: 472.0, en: "Sometimes life's going to hit you in the head with a brick.", ja: "時に人生は頭をレンガで殴るようなショックを与えます。", ipa: "ˈsəmˌtaɪmz laɪfs goʊɪŋ tɪ hɪt ju ɪn ðə hɛd wɪθ ə brɪk." },
+            { id: 172, chapter: "Story2", start: 475.0, end: 475.0, en: "Don't lose faith.", ja: "信念を失わないでください。", ipa: "doʊnt luz feɪθ." },
+            { id: 173, chapter: "Story2", start: 476.0, end: 476.0, en: "I'm convinced that the only thing that kept me going", ja: "私を突き動かし続けてくれた唯一のものは、", ipa: "əm kənˈvɪnst ðət ðə ˈoʊnli θɪŋ ðət kɛpt mi goʊɪŋ" },
+            { id: 174, chapter: "Story2", start: 479.0, end: 479.0, en: "was that I loved what I did.", ja: "自分の仕事を愛していたという事実でした。", ipa: "wɑz ðət aɪ ləvd wət aɪ dɪd." },
+            { id: 175, chapter: "Story2", start: 481.0, end: 481.0, en: "You've got to find what you love.", ja: "皆さんも愛せるものを見つけなければなりません。", ipa: "juv gɑt tɪ faɪnd wət ju ləv." },
+            { id: 176, chapter: "Story2", start: 483.0, end: 483.0, en: "And that is as true for work as it is for your lovers.", ja: "それは仕事においても恋愛においても同じです。", ipa: "ənd ðət ɪz ɛz tru fər wərk ɛz ɪt ɪz fər jʊr ˈləvərz." },
+            { id: 177, chapter: "Story2", start: 486.0, end: 486.0, en: "Your work is going to fill a large part of your life.", ja: "仕事は人生の大部分を占めます。", ipa: "jʊr wərk ɪz goʊɪŋ tɪ fɪl ə lɑrʤ pɑrt əv jʊr laɪf." },
+            { id: 178, chapter: "Story2", start: 489.0, end: 489.0, en: "And the only way to be truly satisfied", ja: "本当に満足する唯一の方法は、", ipa: "ənd ðə ˈoʊnli weɪ tɪ bi ˈtruli ˈsætɪsˌfaɪd" },
+            { id: 179, chapter: "Story2", start: 491.0, end: 491.0, en: "is to do what you believe is great work.", ja: "自分が素晴らしいと信じる仕事をすることです。", ipa: "ɪz tɪ du wət ju bɪˈliv ɪz greɪt wərk." },
+            { id: 180, chapter: "Story2", start: 493.0, end: 493.0, en: "And the only way to do great work is to love what you do.", ja: "そして素晴らしい仕事をする唯一の方法は、自分の仕事を愛することです。", ipa: "ənd ðə ˈoʊnli weɪ tɪ du greɪt wərk ɪz tɪ ləv wət ju du." },
+            { id: 181, chapter: "Story2", start: 497.0, end: 497.0, en: "If you haven't found it yet, keep looking and don't settle.", ja: "もしそれをまだ見つけていないなら、探し続けてください。妥協してはいけません。", ipa: "ɪf ju ˈhævənt faʊnd ɪt jɛt, kip ˈlʊkɪŋ ənd doʊnt ˈsɛtəl." },
+            { id: 182, chapter: "Story2", start: 502.0, end: 502.0, en: "As with all matters of the heart,", ja: "心に関わるすべての事柄がそうであるように、", ipa: "ɛz wɪθ ɔl ˈmætərz əv ðə hɑrt," },
+            { id: 183, chapter: "Story2", start: 504.0, end: 504.0, en: "you'll know when you find it.", ja: "見つけた時には直感で分かります。", ipa: "jul noʊ wɪn ju faɪnd ɪt." },
+            { id: 184, chapter: "Story2", start: 506.0, end: 506.0, en: "And like any great relationship, it just", ja: "アンド素晴らしい人間関係のように、年月が経つにつれて深まっていくものです、", ipa: "ənd laɪk ˈɛni greɪt riˈleɪʃənˌʃɪp, ɪt ʤɪst" },
+            { id: 185, chapter: "Story2", start: 508.0, end: 508.0, en: "gets better and better as the years roll on.", ja: "年月が経つにつれて。", ipa: "gɪts ˈbɛtər ənd ˈbɛtər ɛz ðə jɪrz roʊl ɔn." },
+            { id: 186, chapter: "Story2", start: 510.0, end: 510.0, en: "So keep looking, don't settle.", ja: "だから見つかるまで探し続けてください。妥協しないでください。", ipa: "soʊ kip ˈlʊkɪŋ, doʊnt ˈsɛtəl." },
+            { id: 187, chapter: "Story3", start: 523.0, end: 523.0, en: "My third story is about death.", ja: "3つ目の物語は、死についてです。", ipa: "maɪ θərd ˈstɔri ɪz əˈbaʊt dɛθ." },
+            { id: 188, chapter: "Story3", start: 527.0, end: 527.0, en: "When I was 17, I read a quote that went something like,", ja: "17歳の時、こんな名言を読みました、", ipa: "wɪn aɪ wɑz 17 aɪ rɛd ə kwoʊt ðət wɛnt ˈsəmθɪŋ laɪk," },
+            { id: 189, chapter: "Story3", start: 531.0, end: 531.0, en: "if you live each day as if it was your last,", ja: "「毎日を人生最後の日であるかのように生きていれば、", ipa: "ɪf ju lɪv iʧ deɪ ɛz ɪf ɪt wɑz jʊr læst," },
+            { id: 190, chapter: "Story3", start: 534.0, end: 534.0, en: "someday you'll most certainly be right.", ja: "いつか間違いなくその通りになる」と。", ipa: "ˈsəmˌdeɪ jul moʊst ˈsərtənli bi raɪt." },
+            { id: 191, chapter: "Story3", start: 539.0, end: 539.0, en: "It made an impression on me.", ja: "それは私に強い印象を与えました。", ipa: "ɪt meɪd ən ˌɪmˈprɛʃən ɔn mi." },
+            { id: 192, chapter: "Story3", start: 541.0, end: 541.0, en: "And since then, for the past 33 years,", ja: "アンド以来33年間、", ipa: "ənd sɪns ðɛn, fər ðə pæst 33 jɪrz," },
+            { id: 193, chapter: "Story3", start: 544.0, end: 544.0, en: "I've looked in the mirror every morning", ja: "毎朝鏡を見て問いかけてきました、", ipa: "aɪv lʊkt ɪn ðə ˈmɪrər ˈɛvəri ˈmɔrnɪŋ" },
+            { id: 194, chapter: "Story3", start: 545.0, end: 545.0, en: "and asked myself if today were the last day of my life.", ja: "もし今日が最後の日だとしたら、", ipa: "ənd æst ˌmaɪˈsɛlf ɪf təˈdeɪ wər ðə læst deɪ əv maɪ laɪf." },
+            { id: 195, chapter: "Story3", start: 549.0, end: 549.0, en: "Would I want to do what I am about to do today?", ja: "今日やろうとしていることを本当にしたいだろうか？」と。", ipa: "wʊd aɪ wɔnt tɪ du wət aɪ æm əˈbaʊt tɪ du təˈdeɪ?" },
+            { id: 196, chapter: "Story3", start: 552.0, end: 552.0, en: "And whenever the answer has been no for too many days in a row,", ja: "アンド「いいえ」という答えが何日も続いた時は、", ipa: "ənd wɛˈnɛvər ðə ˈænsər həz bɪn noʊ fər tu ˈmɛni deɪz ɪn ə roʊ," },
+            { id: 197, chapter: "Story3", start: 556.0, end: 556.0, en: "I know I need to change something.", ja: "何かを変える必要があると分かるのです。", ipa: "aɪ noʊ aɪ nid tɪ ʧeɪnʤ ˈsəmθɪŋ." },
+            { id: 198, chapter: "Story3", start: 559.0, end: 559.0, en: "Remembering that I'll be dead soon", ja: "「自分はまもなく死ぬ」と思い出すことは、", ipa: "rɪˈmɛmbərɪŋ ðət aɪl bi dɛd sun" },
+            { id: 199, chapter: "Story3", start: 561.0, end: 561.0, en: "is the most important tool I've ever", ja: "人生で大きな選択を下す助けとなる最も重要なツールです、", ipa: "ɪz ðə moʊst ˌɪmˈpɔrtənt tul aɪv ˈɛvər" },
+            { id: 200, chapter: "Story3", start: 563.0, end: 563.0, en: "encountered to help me make the big choices in life.", ja: "人生で大きな選択を下す。", ipa: "ɪnˈkaʊnərd tɪ hɛlp mi meɪk ðə bɪg ˈʧɔɪsɪz ɪn laɪf." },
+            { id: 201, chapter: "Story3", start: 566.0, end: 566.0, en: "Because almost everything, all external expectations,", ja: "なぜなら周囲の期待、", ipa: "bɪˈkəz ˈɔlˌmoʊst ˈɛvriˌθɪŋ, ɔl ɪkˈstərnəl ˌɛkspɛkˈteɪʃənz," },
+            { id: 202, chapter: "Story3", start: 570.0, end: 570.0, en: "all pride, all fear of embarrassment or failure,", ja: "プライド、恥や失敗への恐れなどは、", ipa: "ɔl praɪd, ɔl fɪr əv ɪmˈbɛrəsmənt ər ˈfeɪljər," },
+            { id: 203, chapter: "Story3", start: 573.0, end: 573.0, en: "these things just fall away in the face of death,", ja: "死を前にすると削ぎ落とされ、", ipa: "ðiz θɪŋz ʤɪst fɔl əˈweɪ ɪn ðə feɪs əv dɛθ," },
+            { id: 204, chapter: "Story3", start: 576.0, end: 576.0, en: "leaving only what is truly important.", ja: "真に重要なものだけが残るからです。", ipa: "ˈlivɪŋ ˈoʊnli wət ɪz ˈtruli ˌɪmˈpɔrtənt." },
+            { id: 205, chapter: "Story3", start: 579.0, end: 579.0, en: "Remembering that you are going to die", ja: "「死ぬのだ」と覚えておくことは、", ipa: "rɪˈmɛmbərɪŋ ðət ju ər goʊɪŋ tɪ daɪ" },
+            { id: 206, chapter: "Story3", start: 581.0, end: 581.0, en: "is the best way I know to avoid the trap of thinking", ja: "失うものがあるという思考の罠を回避する最高の方法です、", ipa: "ɪz ðə bɛst weɪ aɪ noʊ tɪ əˈvɔɪd ðə træp əv ˈθɪŋkɪŋ" },
+            { id: 207, chapter: "Story3", start: 584.0, end: 584.0, en: "you have something to lose.", ja: "失うものがあるという。", ipa: "ju hæv ˈsəmθɪŋ tɪ luz." },
+            { id: 208, chapter: "Story3", start: 586.0, end: 586.0, en: "You are already naked.", ja: "あなたはすでに素裸なのです。", ipa: "ju ər ɔˈrɛdi ˈneɪkəd." },
+            { id: 209, chapter: "Story3", start: 588.0, end: 588.0, en: "There is no reason not to follow your heart.", ja: "自分の心に従わない理由はありません。", ipa: "ðɛr ɪz noʊ ˈrizən nɑt tɪ ˈfɑloʊ jʊr hɑrt." },
+            { id: 210, chapter: "Story3", start: 592.0, end: 592.0, en: "About a year ago, I was diagnosed with cancer.", ja: "1年ほど前、がんと診断されました。", ipa: "əˈbaʊt ə jɪr əˈgoʊ, aɪ wɑz ˌdaɪəgˈnoʊst wɪθ ˈkænsər." },
+            { id: 211, chapter: "Story3", start: 596.0, end: 596.0, en: "I had a scan at 730 in the morning,", ja: "朝7時半のスキャンで、", ipa: "aɪ hæd ə skæn æt 730 ɪn ðə ˈmɔrnɪŋ," },
+            { id: 212, chapter: "Story3", start: 598.0, end: 598.0, en: "and it clearly showed a tumor on my pancreas.", ja: "膵臓に腫瘍がはっきりと映っていました。", ipa: "ənd ɪt ˈklɪrli ʃoʊd ə ˈtumər ɔn maɪ ˈpænkriəs." },
+            { id: 213, chapter: "Story3", start: 601.0, end: 601.0, en: "I didn't even know what a pancreas was.", ja: "「膵臓」が何かも知りませんでした。", ipa: "aɪ ˈdɪdənt ˈivɪn noʊ wət ə ˈpænkriəs wɑz." },
+            { id: 214, chapter: "Story3", start: 604.0, end: 604.0, en: "The doctors told me this was almost certainly", ja: "医師は、ほぼ間違いなく治療不可能ながんであり、", ipa: "ðə ˈdɑktərz toʊld mi ðɪs wɑz ˈɔlˌmoʊst ˈsərtənli" },
+            { id: 215, chapter: "Story3", start: 607.0, end: 607.0, en: "a type of cancer that is incurable", ja: "余命3〜6ヶ月と覚悟すべきだと告げました、", ipa: "ə taɪp əv ˈkænsər ðət ɪz ˌɪnˈkjʊrəbəl" },
+            { id: 216, chapter: "Story3", start: 609.0, end: 609.0, en: "and that I should expect to live no longer than three", ja: "3〜6ヶ月と。", ipa: "ənd ðət aɪ ʃʊd ɪkˈspɛkt tɪ lɪv noʊ ˈlɔŋgər ðən θri" },
+            { id: 217, chapter: "Story3", start: 612.0, end: 612.0, en: "to six months.", ja: "3〜6ヶ月と。", ipa: "tɪ sɪks mənθs." },
+            { id: 218, chapter: "Story3", start: 614.0, end: 614.0, en: "My doctor advised me to go home and get", ja: "主治医は家に帰り身辺整理をするよう勧めました、", ipa: "maɪ ˈdɔktər ədˈvaɪzd mi tɪ goʊ hoʊm ənd gɪt" },
+            { id: 219, chapter: "Story3", start: 617.0, end: 617.0, en: "my affairs in order, which is doctor's", ja: "これは医師の隠語で「死ぬ準備をしろ」という意味です。", ipa: "maɪ əˈfɛrz ɪn ˈɔrdər, wɪʧ ɪz ˈdɑktərz" },
+            { id: 220, chapter: "Story3", start: 619.0, end: 619.0, en: "code for prepare to die.", ja: "これは医師の隠語で「死ぬ準備をしろ」という意味です。", ipa: "koʊd fər priˈpɛr tɪ daɪ." },
+            { id: 221, chapter: "Story3", start: 622.0, end: 622.0, en: "It means to try and tell your kids everything", ja: "今後10年で子供に伝えるはずだったすべてを数ヶ月で伝えるということです、", ipa: "ɪt minz tɪ traɪ ənd tɛl jʊr kɪdz ˈɛvriˌθɪŋ" },
+            { id: 222, chapter: "Story3", start: 625.0, end: 625.0, en: "you thought you'd have the next 10 years to tell them", ja: "数ヶ月で。", ipa: "ju θɔt jʊd hæv ðə nɛkst 10 jɪrz tɪ tɛl ðɛm" },
+            { id: 223, chapter: "Story3", start: 628.0, end: 628.0, en: "in just a few months.", ja: "数ヶ月で。", ipa: "ɪn ʤɪst ə fju mənθs." },
+            { id: 224, chapter: "Story3", start: 630.0, end: 630.0, en: "It means to make sure everything is buttoned up", ja: "家族の負担を減らすため始末をつけること、", ipa: "ɪt minz tɪ meɪk ʃʊr ˈɛvriˌθɪŋ ɪz ˈbətənd əp" },
+            { id: 225, chapter: "Story3", start: 632.0, end: 632.0, en: "so that it will be as easy as possible for your family.", ja: "家族にとって可能な限り楽になるように。", ipa: "soʊ ðət ɪt wɪl bi ɛz ˈizi ɛz ˈpɑsəbəl fər jʊr ˈfæməli." },
+            { id: 226, chapter: "Story3", start: 636.0, end: 636.0, en: "It means to say your goodbyes.", ja: "別れを告げることを意味します。", ipa: "ɪt minz tɪ seɪ jʊr ˌgʊdˈbaɪz." },
+            { id: 227, chapter: "Story3", start: 639.0, end: 639.0, en: "I live with that diagnosis all day.", ja: "私は一日中その診断を抱えて過ごしました。", ipa: "aɪ lɪv wɪθ ðət ˌdaɪəgˈnoʊsəs ɔl deɪ." },
+            { id: 228, chapter: "Story3", start: 642.0, end: 642.0, en: "Later that evening, I had a biopsy", ja: "夕方生検を受け、", ipa: "ˈleɪtər ðət ˈivnɪŋ, aɪ hæd ə ˈbaɪɑpsi" },
+            { id: 229, chapter: "Story3", start: 644.0, end: 644.0, en: "where they stuck an endoscope down my throat,", ja: "内視鏡を喉から通し、", ipa: "wɛr ðeɪ stək ən ˈɛndoʊˌskoʊp daʊn maɪ θroʊt," },
+            { id: 230, chapter: "Story3", start: 647.0, end: 647.0, en: "through my stomach and into my intestines,", ja: "胃を抜けて腸まで入れ、", ipa: "θru maɪ ˈstəmək ənd ˈɪntu maɪ ˌɪnˈtɛstənz," },
+            { id: 231, chapter: "Story3", start: 649.0, end: 649.0, en: "put a needle into my pancreas", ja: "膵臓から針を刺し、", ipa: "pʊt ə ˈnidəl ˈɪntu maɪ ˈpænkriəs" },
+            { id: 232, chapter: "Story3", start: 651.0, end: 651.0, en: "and got a few cells from the tumor.", ja: "腫瘍から細胞を採取しました。", ipa: "ənd gɑt ə fju sɛlz frəm ðə ˈtumər." },
+            { id: 233, chapter: "Story3", start: 653.0, end: 653.0, en: "I was sedated, but my wife, who was there,", ja: "私は鎮静されていましたが、居合わせた妻が教えてくれました、", ipa: "aɪ wɑz sɪˈdeɪtɪd, bət maɪ waɪf, hu wɑz ðɛr," },
+            { id: 234, chapter: "Story3", start: 657.0, end: 657.0, en: "told me that when they viewed the cells under a microscope,", ja: "細胞を見た医師たちが泣き出したと、", ipa: "toʊld mi ðət wɪn ðeɪ vjud ðə sɛlz ˈəndər ə ˈmaɪkrəˌskoʊp," },
+            { id: 235, chapter: "Story3", start: 700.0, end: 700.0, en: "the doctor started crying because it turned out", ja: "手術で治るきわめて稀な膵臓がんだと判明したからです、", ipa: "ðə ˈdɔktər ˈstɑrtɪd kraɪɪŋ bɪˈkəz ɪt tərnd aʊt" },
+            { id: 236, chapter: "Story3", start: 702.0, end: 702.0, en: "to be a very rare form of pancreatic cancer", ja: "手術で治る。", ipa: "tɪ bi ə ˈvɛri rɛr fɔrm əv ˌpænkriˈætɪk ˈkænsər" },
+            { id: 237, chapter: "Story3", start: 705.0, end: 705.0, en: "that is curable with surgery.", ja: "手術で治る。", ipa: "ðət ɪz ˈkjʊrəbəl wɪθ ˈsərʤəri." },
+            { id: 238, chapter: "Story3", start: 707.0, end: 707.0, en: "I had the surgery, and thankfully, I'm fine now.", ja: "私は手術を受け、ありがたいことに今は無事です。", ipa: "aɪ hæd ðə ˈsərʤəri, ənd ˈθæŋkfəli, əm faɪn naʊ." },
+            { id: 239, chapter: "Story3", start: 719.0, end: 719.0, en: "This was the closest I've been to facing death,", ja: "これが最も死に近づいた体験でしたし、", ipa: "ðɪs wɑz ðə ˈkloʊsəst aɪv bɪn tɪ ˈfeɪsɪŋ dɛθ," },
+            { id: 240, chapter: "Story3", start: 722.0, end: 722.0, en: "and I hope it's the closest I get for a few more decades.", ja: "今後数十年はこれ以上近づかないことを願っています。", ipa: "ənd aɪ hoʊp ɪts ðə ˈkloʊsəst aɪ gɪt fər ə fju mɔr ˈdɛkeɪdz." },
+            { id: 241, chapter: "Story3", start: 725.0, end: 725.0, en: "Having lived through it, I can now say this to you", ja: "それを潜り抜けた今、死が純粋に概念的だった頃よりも少し確信を持って言えます、", ipa: "ˈhævɪŋ lɪvd θru ɪt, aɪ kən naʊ seɪ ðɪs tɪ ju" },
+            { id: 242, chapter: "Story3", start: 728.0, end: 728.0, en: "with a bit more certainty than when death", ja: "概念的だった頃よりも。", ipa: "wɪθ ə bɪt mɔr ˈsərtənti ðən wɪn dɛθ" },
+            { id: 243, chapter: "Story3", start: 730.0, end: 730.0, en: "was a useful but purely intellectual concept.", ja: "概念的だった頃よりも。", ipa: "wɑz ə ˈjusfəl bət ˈpjʊrli ˌɪnəˈlɛkʧuəl ˈkɑnsɛpt." },
+            { id: 244, chapter: "Story3", start: 734.0, end: 734.0, en: "No one wants to die.", ja: "誰も死にたくはありません。", ipa: "noʊ wən wɔnts tɪ daɪ." },
+            { id: 245, chapter: "Story3", start: 736.0, end: 736.0, en: "Even people who want to go to heaven", ja: "天国に行きたい人たちでさえ、", ipa: "ˈivɪn ˈpipəl hu wɔnt tɪ goʊ tɪ ˈhɛvən" },
+            { id: 246, chapter: "Story3", start: 738.0, end: 738.0, en: "don't want to die to get there.", ja: "そこへ行くために死にたいとは思いません。", ipa: "doʊnt wɔnt tɪ daɪ tɪ gɪt ðɛr." },
+            { id: 247, chapter: "Story3", start: 740.0, end: 740.0, en: "And yet, death is the destination we all share.", ja: "しかし死は私たち全員が共有する終着点です。", ipa: "ənd jɛt, dɛθ ɪz ðə ˌdɛstɪˈneɪʃən wi ɔl ʃɛr." },
+            { id: 248, chapter: "Story3", start: 744.0, end: 744.0, en: "No one has ever escaped it.", ja: "誰も逃れられません。", ipa: "noʊ wən həz ˈɛvər ɪˈskeɪpt ɪt." },
+            { id: 249, chapter: "Story3", start: 746.0, end: 746.0, en: "And that is as it should be,", ja: "アンドそうあるべきなのです、", ipa: "ənd ðət ɪz ɛz ɪt ʃʊd bi," },
+            { id: 250, chapter: "Story3", start: 748.0, end: 748.0, en: "because death is very likely", ja: "なぜなら死はおそらく生命の最高の発明だからです。", ipa: "bɪˈkəz dɛθ ɪz ˈvɛri ˈlaɪkli" },
+            { id: 251, chapter: "Story3", start: 750.0, end: 750.0, en: "the single best invention of life.", ja: "生命の最高の発明。", ipa: "ðə ˈsɪŋgəl bɛst ˌɪnˈvɛnʃən əv laɪf." },
+            { id: 252, chapter: "Story3", start: 753.0, end: 753.0, en: "It's life's change agent.", ja: "それは生命の変革者であり、", ipa: "ɪts laɪfs ʧeɪnʤ ˈeɪʤənt." },
+            { id: 253, chapter: "Story3", start: 755.0, end: 755.0, en: "It clears out the old to make way for the new.", ja: "新しいもののために古いものを消し去ります。", ipa: "ɪt klɪrz aʊt ðə oʊld tɪ meɪk weɪ fər ðə nu." },
+            { id: 254, chapter: "Story3", start: 757.0, end: 757.0, en: "Right now, the new is you.", ja: "今、新しいものとは皆さんです。", ipa: "raɪt naʊ, ðə nu ɪz ju." },
+            { id: 255, chapter: "Story3", start: 761.0, end: 761.0, en: "But someday, not too long from now,", ja: "しかしそう遠くない将来、", ipa: "bət ˈsəmˌdeɪ, nɑt tu lɔŋ frəm naʊ," },
+            { id: 256, chapter: "Story3", start: 763.0, end: 763.0, en: "you will gradually become the old and be cleared away.", ja: "皆さんも徐々に古いものとなり消し去られます。", ipa: "ju wɪl ˈgræʤuəli bɪˈkəm ðə oʊld ənd bi klɪrd əˈweɪ." },
+            { id: 257, chapter: "Story3", start: 766.0, end: 766.0, en: "Sorry to be so dramatic, but it's quite true.", ja: "大げさで申し訳ありませんが、これは全くの事実です。", ipa: "ˈsɑri tɪ bi soʊ drəˈmætɪk, bət ɪts kwaɪt tru." },
+            { id: 258, chapter: "Story3", start: 770.0, end: 770.0, en: "Your time is limited,", ja: "皆さんの時間は限られています、", ipa: "jʊr taɪm ɪz ˈlɪmɪtɪd," },
+            { id: 259, chapter: "Story3", start: 772.0, end: 772.0, en: "so don't waste it living someone else's life.", ja: "誰か他の人の人生を生きて無駄にしないでください。", ipa: "soʊ doʊnt weɪst ɪt ˈlɪvɪŋ ˈsəmˌwən ˈɛlsɪz laɪf." },
+            { id: 260, chapter: "Story3", start: 776.0, end: 776.0, en: "Don't be trapped by dogma,", ja: "ドグマに囚われないでください、", ipa: "doʊnt bi træpt baɪ ˈdɑgmə," },
+            { id: 261, chapter: "Story3", start: 778.0, end: 778.0, en: "which is living with the results of other people's thinking.", ja: "それは他人の思考結果に従って生きるということです。", ipa: "wɪʧ ɪz ˈlɪvɪŋ wɪθ ðə rɪˈzəlts əv ˈəðər ˈpipəlz ˈθɪŋkɪŋ." },
+            { id: 262, chapter: "Story3", start: 781.0, end: 781.0, en: "Don't let the noise of others' opinions", ja: "他人の意見というノイズに、", ipa: "doʊnt lɛt ðə nɔɪz əv ˈəðərz' əˈpɪnjənz" },
+            { id: 263, chapter: "Story3", start: 783.0, end: 783.0, en: "drown out your own inner voice.", ja: "自分の内なる声をかき消させないでください。", ipa: "draʊn aʊt jʊr oʊn ˈɪnər vɔɪs." },
+            { id: 264, chapter: "Story3", start: 785.0, end: 785.0, en: "And most important,", ja: "アンド最も重要なのは、", ipa: "ənd moʊst ˌɪmˈpɔrtənt," },
+            { id: 265, chapter: "Story3", start: 787.0, end: 787.0, en: "have the courage to follow your heart and intuition.", ja: "自分の心と直感に従う勇気を持つことです。", ipa: "hæv ðə kərɪʤ tɪ ˈfɑloʊ jʊr hɑrt ənd ˌɪntuˈɪʃən." },
+            { id: 266, chapter: "Story3", start: 790.0, end: 790.0, en: "They somehow already know what you truly want to become.", ja: "心と直感は、あなたが本当はどうなりたいかをなぜか既に知っているのです。", ipa: "ðeɪ ˈsəmˌhaʊ ɔˈrɛdi noʊ wət ju ˈtruli wɔnt tɪ bɪˈkəm." },
+            { id: 267, chapter: "Story3", start: 794.0, end: 794.0, en: "Everything else is secondary.", ja: "それ以外はすべて二の次です。", ipa: "ˈɛvriˌθɪŋ ɛls ɪz ˈsɛkənˌdɛri." },
+            { id: 268, chapter: "Story3", start: 807.0, end: 807.0, en: "When I was young,", ja: "私が若い頃、", ipa: "wɪn aɪ wɑz jəŋ," },
+            { id: 269, chapter: "Story3", start: 809.0, end: 809.0, en: "there was an amazing publication", ja: "『ホール・アース・カタログ』という素晴らしい出版物があり、", ipa: "ðɛr wɑz ən əˈmeɪzɪŋ ˌpəblɪˈkeɪʃən" },
+            { id: 270, chapter: "Story3", start: 811.0, end: 811.0, en: "called The Whole Earth Catalog,", ja: "『ホール・アース・カタログ』という、", ipa: "kɔld ðə hoʊl ərθ ˈkætəlɔg," },
+            { id: 271, chapter: "Story3", start: 813.0, end: 813.0, en: "which was one of the Bibles of my generation.", ja: "同世代のバイブルの一つでした。", ipa: "wɪʧ wɑz wən əv ðə ˈbaɪbəlz əv maɪ ˌʤɛnərˈeɪʃən." },
+            { id: 272, chapter: "Story3", start: 816.0, end: 816.0, en: "It was created by a fellow named Stuart Brand,", ja: "ここから遠くないメンローパークのスチュアート・ブランドという人物が、", ipa: "ɪt wɑz kriˈeɪtɪd baɪ ə ˈfɛloʊ neɪmd stɔrt brænd," },
+            { id: 273, chapter: "Story3", start: 819.0, end: 819.0, en: "not far from here in Menlo Park,", ja: "メンローパークの、", ipa: "nɑt fɑr frəm hir ɪn ˈmɛnloʊ pɑrk," },
+            { id: 274, chapter: "Story3", start: 821.0, end: 821.0, en: "and he brought it to life with his poetic touch.", ja: "詩的な感性で生み出しました。", ipa: "ənd hi brɔt ɪt tɪ laɪf wɪθ hɪz poʊˈɛtɪk təʧ." },
+            { id: 275, chapter: "Story3", start: 824.0, end: 824.0, en: "This was in the late 60s,", ja: "これは1960年代後半、", ipa: "ðɪs wɑz ɪn ðə leɪt ˈsɪkstiz," },
+            { id: 276, chapter: "Story3", start: 826.0, end: 826.0, en: "before personal computers and desktop publishing,", ja: "パソコンやDTPが登場する前だったので、", ipa: "ˌbiˈfɔr ˈpərsɪnəl kəmˈpjutərz ənd ˈdɛskˌtɑp ˈpəblɪʃɪŋ," },
+            { id: 277, chapter: "Story3", start: 828.0, end: 828.0, en: "so it was all made with typewriters,", ja: "タイプライターとハサミとポラロイドカメラで作られていました、", ipa: "soʊ ɪt wɑz ɔl meɪd wɪθ ˈtaɪˌpraɪtərz," },
+            { id: 278, chapter: "Story3", start: 831.0, end: 831.0, en: "scissors, and Polaroid cameras.", ja: "ハサミとポラロイドカメラで。", ipa: "ˈsɪzərz, ənd ˈpoʊlərˌɔɪd ˈkæmərəz." },
+            { id: 279, chapter: "Story3", start: 833.0, end: 833.0, en: "It was sort of like Google in paperback form", ja: "Google登場の35年前の、", ipa: "ɪt wɑz sɔrt əv laɪk ˈgugəl ɪn ˈpeɪpərˌbæk fɔrm" },
+            { id: 280, chapter: "Story3", start: 835.0, end: 835.0, en: "35 years before Google came along.", ja: "ペーパーバック版Googleのようなものでした。", ipa: "35 jɪrz ˌbiˈfɔr ˈgugəl keɪm əˈlɔŋ." },
+            { id: 281, chapter: "Story3", start: 838.0, end: 838.0, en: "It was idealistic,", ja: "観念的で、", ipa: "ɪt wɑz aɪˌdiəˈlɪstɪk," },
+            { id: 282, chapter: "Story3", start: 840.0, end: 840.0, en: "overflowing with neat tools and great notions.", ja: "洗練されたツールと優れた概念に溢れていました。", ipa: "ˈoʊvərˌfloʊɪŋ wɪθ nit tulz ənd greɪt ˈnoʊʃənz." },
+            { id: 283, chapter: "Story3", start: 843.0, end: 843.0, en: "Stuart and his team put out several issues", ja: "スチュアートと彼のチームは号をいくつか出版し、", ipa: "stɔrt ənd hɪz tim pʊt aʊt ˈsɛvərəl ˈɪʃuz" },
+            { id: 284, chapter: "Story3", start: 845.0, end: 845.0, en: "of The Whole Earth Catalog,", ja: "『ホール・アース・カタログ』の、", ipa: "əv ðə hoʊl ərθ ˈkætəlɔg," },
+            { id: 285, chapter: "Story3", start: 847.0, end: 847.0, en: "and then, when it had run its course,", ja: "役割を全うした時、", ipa: "ənd ðɛn, wɪn ɪt hæd rən ɪts kɔrs," },
+            { id: 286, chapter: "Story3", start: 849.0, end: 849.0, en: "they put out a final issue.", ja: "最終号を出しました。", ipa: "ðeɪ pʊt aʊt ə ˈfaɪnəl ˈɪʃu." },
+            { id: 287, chapter: "Story3", start: 851.0, end: 851.0, en: "It was the mid-1970s,", ja: "1970年代半ば、", ipa: "ɪt wɑz ðə mɪd naɪnˈtin ˈsɛvəntiz," },
+            { id: 288, chapter: "Story3", start: 852.0, end: 852.0, en: "and I was your age.", ja: "私が皆さんと同じ年齢の頃でした。", ipa: "ənd aɪ wɑz jʊr eɪʤ." },
+            { id: 289, chapter: "Story3", start: 856.0, end: 856.0, en: "On the back cover of their final issue", ja: "最終号の裏表紙には、", ipa: "ɔn ðə bæk ˈkəvər əv ðɛr ˈfaɪnəl ˈɪʃu" },
+            { id: 290, chapter: "Story3", start: 858.0, end: 858.0, en: "was a photograph of an early morning country road,", ja: "早朝の田舎道の写真が載っていました、", ipa: "wɑz ə ˈfoʊtəˌgræf əv ən ˈərli ˈmɔrnɪŋ ˈkəntri roʊd," },
+            { id: 291, chapter: "Story3", start: 862.0, end: 862.0, en: "the kind you might find yourself hitchhiking on", ja: "冒険心があればヒッチハイクをするような道です、", ipa: "ðə kaɪnd ju maɪt faɪnd ˈjɔrsɛlf ˈhɪˌʧhaɪkɪŋ ɔn" },
+            { id: 292, chapter: "Story3", start: 864.0, end: 864.0, en: "if you were so adventurous.", ja: "もし冒険心があれば。", ipa: "ɪf ju wər soʊ ædˈvɛnʧərəs." },
+            { id: 293, chapter: "Story3", start: 867.0, end: 867.0, en: "Beneath it were the words,", ja: "その下にはこう書かれていました、", ipa: "bɪˈniθ ɪt wər ðə wərdz," },
+            { id: 294, chapter: "Story3", start: 869.0, end: 869.0, en: "stay hungry, stay foolish.", ja: "「ハングリーであれ。愚かであれ。」", ipa: "steɪ ˈhəŋgri, steɪ ˈfulɪʃ." },
+            { id: 295, chapter: "Story3", start: 872.0, end: 872.0, en: "It was their farewell message as they signed off.", ja: "活動を終える際の別れのメッセージでした。", ipa: "ɪt wɑz ðɛr ˌfɛrˈwɛl ˈmɛsɪʤ ɛz ðeɪ saɪnd ɔf." },
+            { id: 296, chapter: "Story3", start: 875.0, end: 875.0, en: "Stay hungry, stay foolish.", ja: "ハングリーであれ。愚かであれ。", ipa: "steɪ ˈhəŋgri, steɪ ˈfulɪʃ." },
+            { id: 297, chapter: "Story3", start: 878.0, end: 878.0, en: "And I have always wished that for myself.", ja: "私は常に自分自身そうありたいと願ってきました。", ipa: "ənd aɪ hæv ˈɔlˌweɪz wɪʃt ðət fər ˌmaɪˈsɛlf." },
+            { id: 298, chapter: "Story3", start: 881.0, end: 881.0, en: "And now, as you graduate to begin anew,", ja: "アンド今、卒業して新たに歩み出す皆さんに、", ipa: "ənd naʊ, ɛz ju ˈgræʤəˌweɪt tɪ bɪˈgɪn əˈnu," },
+            { id: 299, chapter: "Story3", start: 885.0, end: 885.0, en: "I wish that for you.", ja: "それを贈ります。", ipa: "aɪ wɪʃ ðət fər ju." },
+            { id: 300, chapter: "Story3", start: 887.0, end: 887.0, en: "Stay hungry, stay foolish.", ja: "ハングリーであれ。愚かであれ。", ipa: "steɪ ˈhəŋgri, steɪ ˈfulɪʃ." },
+            { id: 301, chapter: "Story3", start: 890.0, end: 890.0, en: "Thank you all very much.", ja: "ご清聴ありがとうございました。", ipa: "θæŋk ju ɔl ˈvɛri məʧ." }
         ];
+
+        // 終端秒数の自動計算（次のフレーズの開始秒数を終了秒数に設定）
+        for(let i=0; i < SPEECH_DATA.length - 1; i++) {
+            SPEECH_DATA[i].end = SPEECH_DATA[i+1].start;
+        }
 
         let currentIndex = 0;
         let isLooping = false;
@@ -335,7 +521,7 @@
             audio.currentTime = item.start;
             audio.play();
             updatePlayButton(true);
-            updateActiveCard(true); // 即時スクロール指示
+            updateActiveCard();
         }
 
         function togglePlay() {
@@ -391,10 +577,11 @@
             audio.playbackRate = parseFloat(speed);
         }
 
+        // 上部チャプターボタン専用：確実に章の最初の要素（ID）を特定して再生を開始する
         function scrollToChapter(chapter) {
-            const firstOfChapter = SPEECH_DATA.find(s => s.chapter === chapter);
-            if (firstOfChapter) {
-                playSentence(firstOfChapter.id);
+            const target = SPEECH_DATA.find(s => s.chapter === chapter);
+            if (target) {
+                playSentence(target.id);
             }
         }
 
@@ -404,8 +591,7 @@
             document.body.className = `mode-${mode}`;
         }
 
-        // 判定・ハイライトおよび絶対座標によるラグなし物理スクロール処理
-        function updateActiveCard(forceImmediate = false) {
+        function updateActiveCard() {
             document.querySelectorAll('.sentence-card').forEach(c => c.classList.remove('active'));
             const currentItem = SPEECH_DATA[currentIndex];
             if(!currentItem) return;
@@ -414,7 +600,7 @@
             if (card) {
                 card.classList.add('active');
                 
-                // 文頭のタイミングで即座に画面中央へ吸い付ける計算
+                // delay原因だった smooth を完全に排除し、数学的に画面中央へ即時強制移動させる「ハードスクロール」
                 const rect = card.getBoundingClientRect();
                 const cardCenter = rect.top + rect.height / 2;
                 const windowCenter = window.innerHeight / 2;
@@ -422,7 +608,7 @@
 
                 window.scrollBy({
                     top: offset,
-                    behavior: forceImmediate ? 'auto' : 'smooth'
+                    behavior: 'auto'
                 });
             }
 
@@ -431,16 +617,16 @@
             if (activeTab) activeTab.classList.add('active');
         }
 
-        // 超高速60fps（16ms精度）リアルタイム時間監視Loop機能
+        // 超高速60fps（16ms精度）リアルタイム時間監視
         function syncLoop() {
             if (!audio.paused) {
                 const time = audio.currentTime;
+                // 現在の再生時間に合わせてインデックスを強制一致
                 const foundIndex = SPEECH_DATA.findIndex(s => time >= s.start && time < s.end);
                 
-                // 音声が新しいフレーズの文頭（start）に入った瞬間に検知
                 if (foundIndex !== -1 && foundIndex !== currentIndex) {
                     currentIndex = foundIndex;
-                    updateActiveCard(); // 瞬時に自動スクロール起動
+                    updateActiveCard();
                 }
 
                 const currentItem = SPEECH_DATA[currentIndex];
@@ -455,8 +641,8 @@
 
         window.onload = () => {
             renderAllSentences();
-            updateActiveCard(true);
-            requestAnimationFrame(syncLoop); // 秒間60回の超高速同期ループを開始
+            updateActiveCard();
+            requestAnimationFrame(syncLoop);
         };
     </script>
 </body>
